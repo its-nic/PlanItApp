@@ -1,11 +1,11 @@
 import { Text, View } from "react-native"
 
-const SettingsView = () => {
+const AddTask = () => {
     return (
         <View>
-            <Text>SettingsPage</Text>
+            <Text>AddTaskPage</Text>
         </View>
     );
 }
 
-export default SettingsView;
+export default AddTask;
