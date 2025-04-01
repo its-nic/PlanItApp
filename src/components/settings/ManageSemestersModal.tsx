@@ -15,8 +15,6 @@ interface ManageSemestersModalProps {
     selectedSemesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>;
 }
 
-const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false);
-
 const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({ visible, onClose, db, semesters, semestersStateSetter, selectedSemester, selectedSemesterStateSetter }) => {
 
     return(
@@ -58,17 +56,9 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({ visible, on
                         </ScrollView>
 
                         {/* Close Button */}
-                        <Button title="Close" onPress={() => onClose()} />
-                            
+                        <Button title="Close" onPress={() => onClose()} />                            
                     </View>
                     <Button title="Create New Semester" onPress={() => setNewSemesterModalVisible(true)} />
-                    <NewSemesterForm
-                        visible={newSemesterModalVisible}
-                        onClose={() => setNewSemesterModalVisible(false)}
-                        db={db}
-                        semestersStateSetter={semestersStateSetter}
-                        selectedSemesterStateSetter={selectedSemesterStateSetter}
-                    />
                 </View>
             </Modal>
     );
