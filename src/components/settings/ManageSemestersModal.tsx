@@ -1,124 +1,165 @@
 import * as SQLite from "expo-sqlite";
-import { deleteSemester, getSemesters, saveSelectedSemester } from "../../database/db";
+import {
+  deleteSemester,
+  getSemesters,
+  saveSelectedSemester,
+} from "../../database/db";
 import Semester from "../../types/Semester";
-import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Button,
+} from "react-native";
 import { useState } from "react";
 import NewSemesterForm from "./NewSemesterForm";
 
 interface ManageSemestersModalProps {
-    visible: boolean
-    onClose: () => void;
-    db: SQLite.SQLiteDatabase;
-    semesters: Semester[];
-    semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>;
-    selectedSemester: Semester;
-    selectedSemesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>;
+  visible: boolean;
+  onClose: () => void;
+  db: SQLite.SQLiteDatabase;
+  semesters: Semester[];
+  semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>;
+  selectedSemester: Semester;
+  selectedSemesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>;
 }
 
-const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({ visible, onClose, db, semesters, semestersStateSetter, selectedSemester, selectedSemesterStateSetter }) => {
+const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
+  visible,
+  onClose,
+  db,
+  semesters,
+  semestersStateSetter,
+  selectedSemester,
+  selectedSemesterStateSetter,
+}) => {
+  const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false);
 
-    return(
-        <Modal visible={visible} animationType="slide">
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>Select a Semester</Text>
-                        <ScrollView style={styles.scrollView}>
-                            {semesters.map((semester) => (
-                                <View key={semester.id} style={styles.semesterItem}>
-                                    <Text style={styles.semesterText}>{semester.title}</Text>
-                                    <Text>{`Start: ${semester.start_date}`}</Text>
-                                    <Text>{`End: ${semester.end_date}`}</Text>
-                                    
-                                    {/* Select Button */}
-                                    <TouchableOpacity 
-                                        style={styles.selectButton} 
-                                        onPress={() => {
-                                            selectedSemesterStateSetter(semester);
-                                            saveSelectedSemester(semester);
-                                            onClose();
-                                        }}
-                                    >
-                                        <Text style={styles.selectButtonText}>Select</Text>
-                                    </TouchableOpacity>
+  return (
+    <Modal visible={visible} animationType="slide">
+      <View style={styles.modalBackground}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Manage Semesters</Text>
 
-                                    {/* Delete Button */}
-                                    <TouchableOpacity 
-                                        style={styles.deleteButton} 
-                                        onPress={() => {
-                                            deleteSemester(db, semester.id);
-                                            getSemesters(db, semestersStateSetter);
-                                        }}
-                                    >
-                                        <Text style={styles.deleteButtonText}>Delete</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
-                        </ScrollView>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {semesters.map((semester) => (
+              <View key={semester.id} style={styles.semesterItem}>
+                <Text style={styles.semesterText}>{semester.title}</Text>
+                <Text style={styles.semesterDate}>{`Start: ${semester.start_date}`}</Text>
+                <Text style={styles.semesterDate}>{`End: ${semester.end_date}`}</Text>
 
-                        {/* Close Button */}
-                        <Button title="Close" onPress={() => onClose()} />                            
-                    </View>
-                    <Button title="Create New Semester" onPress={() => setNewSemesterModalVisible(true)} />
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.selectButton}
+                    onPress={() => {
+                      selectedSemesterStateSetter(semester);
+                      saveSelectedSemester(semester);
+                      onClose();
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Select</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => {
+                      deleteSemester(db, semester.id);
+                      getSemesters(db, semestersStateSetter);
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
                 </View>
-            </Modal>
-    );
+              </View>
+            ))}
+          </ScrollView>
+
+          <View style={styles.bottomButtons}>
+            <Button title="Create New Semester" color="#32CD32" onPress={() => setNewSemesterModalVisible(true)} />
+            <View style={styles.spacer} />
+            <Button title="Close" color="#FF6347" onPress={onClose} />
+          </View>
+        </View>
+
+        <NewSemesterForm
+          visible={newSemesterModalVisible}
+          onClose={() => setNewSemesterModalVisible(false)}
+          db={db}
+          semestersStateSetter={semestersStateSetter}
+          selectedSemesterStateSetter={selectedSemesterStateSetter}
+        />
+      </View>
+    </Modal>
+  );
 };
 
 const styles = StyleSheet.create({
-    modalBackground: {
-        flex: 1,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalContainer: {
-        width: "100%",
-        backgroundColor: "white",
-        padding: 20,
-        borderRadius: 10,
-        alignItems: "center",
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        marginBottom: 10,
-    },
-    scrollView: {
-        maxHeight: 300,
-        width: "100%",
-    },
-    semesterItem: {
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        marginVertical: 5,
-        alignItems: "center",
-    },
-    semesterText: {
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    selectButton: {
-        backgroundColor: "#007BFF",
-        padding: 5,
-        marginTop: 5,
-        borderRadius: 5,
-    },
-    selectButtonText: {
-        color: "white",
-        fontWeight: "bold",
-    },
-    deleteButton: {
-        backgroundColor: "red",
-        padding: 5,
-        marginTop: 5,
-        borderRadius: 5,
-    },
-    deleteButtonText: {
-        color: "white",
-        fontWeight: "bold",
-    },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
+    paddingTop: 60,
+  },
+  modalContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  semesterItem: {
+    backgroundColor: "white",
+    padding: 15,
+    marginBottom: 12,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  semesterText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  semesterDate: {
+    fontSize: 14,
+    color: "#444",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  selectButton: {
+    backgroundColor: "#1E90FF",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  deleteButton: {
+    backgroundColor: "#FF4C4C",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  bottomButtons: {
+    marginTop: 10,
+    paddingBottom: 20,
+  },
+  spacer: {
+    height: 10,
+  },
 });
 
 export default ManageSemestersModal;
