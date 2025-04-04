@@ -30,29 +30,41 @@ export async function initializeDB(db: SQLite.SQLiteDatabase) {
   }
 };
 
-/// Get all semesters from the database and set them to state
+// Get all semesters from the database and set them to state
 export async function getSemesters(db: SQLite.SQLiteDatabase, semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>) {
   const allRows: Semester[] = await db.getAllAsync('SELECT * FROM semesters');
-  semestersStateSetter(allRows);
+  const semesters: Semester[] = allRows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    start_date: new Date(row.start_date),
+    end_date: new Date (row.end_date),
+  }));
+  semestersStateSetter(semesters);
 };
 
 export async function getSemester(db:SQLite.SQLiteDatabase, semesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>) {
-  const row: Semester | null = await db.getFirstAsync('SELECT * FROM semesters WHERE id = $id');
+  const row: any = await db.getFirstAsync('SELECT * FROM semesters WHERE id = $id');
   if(row != null){
-    semesterStateSetter(row);
+    const semester: Semester = {
+      id: row.id,
+      title: row.title,
+      start_date: new Date(row.start_date),
+      end_date: new Date (row.end_date),
+    };
+    semesterStateSetter(semester);
   }
 }
 
 // Add a new semester to the database
-export async function addSemester(db: SQLite.SQLiteDatabase,  title: string, start_date: string, end_date: string) {
+export async function addSemester(db: SQLite.SQLiteDatabase,  title: string, start_date: Date, end_date: Date) {
   const statement = await db.prepareAsync(
     `INSERT INTO semesters (title, start_date, end_date) VALUES ($title, $start_date, $end_date)`
   );
   try {
     let result = await statement.executeAsync({
       $title: title,
-      $start_date: start_date,
-      $end_date: end_date,
+      $start_date: start_date.toISOString(),
+      $end_date: end_date.toISOString(),
     });
     console.log('Semester added successfully:', result);
     await saveSelectedSemester({id:result.lastInsertRowId, title, start_date, end_date});

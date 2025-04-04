@@ -61,9 +61,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
       alert("Please enter a semester title.");
       return;
     }
-    const isoStartDate = startDate.toISOString().split("T")[0];
-    const isoEndDate = endDate.toISOString().split("T")[0];
-    await addSemester(db, title.trim(), isoStartDate, isoEndDate);
+    await addSemester(db, title.trim(), startDate, endDate);
     await getSelectedSemester(selectedSemesterStateSetter);
     await getSemesters(db, semestersStateSetter);
     onClose();
@@ -82,6 +80,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="e.g. Fall 2025"
+            placeholderTextColor={"#B3B3B3"}
             value={title}
             onChangeText={setTitle}
             returnKeyType="done"
@@ -92,7 +91,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onPress={() => setShowStartDatePicker(true)}
             >
             <Text style={styles.buttonText}>
-              Start Date: {startDate.toLocaleDateString()}
+              Start Date: {startDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
             </Text>
           </TouchableOpacity>
 
@@ -101,7 +100,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onPress={() => setShowEndDatePicker(true)}
             >
             <Text style={styles.buttonText}>
-              End Date: {endDate.toLocaleDateString()}
+              End Date: {endDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
             </Text>
           </TouchableOpacity>
 
@@ -126,6 +125,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onConfirm={handleStartDateConfirm}
             onCancel={() => setShowStartDatePicker(false)}
             maximumDate={endDate}
+            themeVariant="light"
           />
           <DateTimePickerModal
             isVisible={showEndDatePicker}
@@ -133,6 +133,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onConfirm={handleEndDateConfirm}
             onCancel={() => setShowEndDatePicker(false)}
             minimumDate={startDate}
+            themeVariant="light"
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   datePickerButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#1A65EB",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   createButton: {
-    backgroundColor: "#32CD32",
+    backgroundColor: "#28A745",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     width: "45%",
   },
   cancelButton: {
-    backgroundColor: "#FF4C4C",
+    backgroundColor: "#DC3545",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,

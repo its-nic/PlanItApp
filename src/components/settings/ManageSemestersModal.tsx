@@ -46,14 +46,14 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
           <Text style={styles.modalSubtitle}>Active Semester: {selectedSemester.title}</Text>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {semesters.map((semester) => {
+            {semesters.map((semester: Semester) => {
               const isSelected = selectedSemester.id === semester.id;
 
               return (
                 <View key={semester.id} style={styles.semesterItem}>
                   <Text style={styles.semesterText}>{semester.title}</Text>
-                  <Text style={styles.semesterDate}>{`Start: ${semester.start_date}`}</Text>
-                  <Text style={styles.semesterDate}>{`End: ${semester.end_date}`}</Text>
+                  <Text style={styles.semesterDate}>{`Start: ${semester.start_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}`}</Text>
+                  <Text style={styles.semesterDate}>{`End: ${semester.end_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}`}</Text>
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   selectButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#1A65EB",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
   deleteButton: {
-    backgroundColor: "#FF4C4C",
+    backgroundColor: "#DC3545",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   newSemesterButton: {
-    backgroundColor: "#32CD32",
+    backgroundColor: "#28A745",
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginBottom: 10,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeButton: {
-    backgroundColor: "#FF6347",
+    backgroundColor: "#DC3545",
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 6,
