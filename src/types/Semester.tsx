@@ -1,8 +1,8 @@
 type Semester = {
     id: number;
     title: string;
-    start_date: string;
-    end_date: string;
+    start_date: Date;
+    end_date: Date;
     };
 
 export default Semester;

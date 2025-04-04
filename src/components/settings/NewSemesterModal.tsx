@@ -61,9 +61,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
       alert("Please enter a semester title.");
       return;
     }
-    const isoStartDate = startDate.toISOString().split("T")[0];
-    const isoEndDate = endDate.toISOString().split("T")[0];
-    await addSemester(db, title.trim(), isoStartDate, isoEndDate);
+    await addSemester(db, title.trim(), startDate, endDate);
     await getSelectedSemester(selectedSemesterStateSetter);
     await getSemesters(db, semestersStateSetter);
     onClose();
@@ -93,7 +91,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onPress={() => setShowStartDatePicker(true)}
             >
             <Text style={styles.buttonText}>
-              Start Date: {startDate.toLocaleDateString()}
+              Start Date: {startDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
             </Text>
           </TouchableOpacity>
 
@@ -102,7 +100,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onPress={() => setShowEndDatePicker(true)}
             >
             <Text style={styles.buttonText}>
-              End Date: {endDate.toLocaleDateString()}
+              End Date: {endDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
             </Text>
           </TouchableOpacity>
 

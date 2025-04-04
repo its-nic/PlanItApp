@@ -46,14 +46,14 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
           <Text style={styles.modalSubtitle}>Active Semester: {selectedSemester.title}</Text>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {semesters.map((semester) => {
+            {semesters.map((semester: Semester) => {
               const isSelected = selectedSemester.id === semester.id;
 
               return (
                 <View key={semester.id} style={styles.semesterItem}>
                   <Text style={styles.semesterText}>{semester.title}</Text>
-                  <Text style={styles.semesterDate}>{`Start: ${semester.start_date}`}</Text>
-                  <Text style={styles.semesterDate}>{`End: ${semester.end_date}`}</Text>
+                  <Text style={styles.semesterDate}>{`Start: ${semester.start_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}`}</Text>
+                  <Text style={styles.semesterDate}>{`End: ${semester.end_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}`}</Text>
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   selectButton: {
-    backgroundColor: "#1a65eb",
+    backgroundColor: "#1A65EB",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,

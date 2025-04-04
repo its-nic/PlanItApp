@@ -9,8 +9,8 @@ import CalendarView from './CalendarView';
 import TasksView from './TasksView';
 import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
-import NewSemesterForm from '../components/settings/NewSemesterModal';
 import Semester from '../types/Semester';
+import NewSemesterModal from '../components/settings/NewSemesterModal';
 
 // Reset database on app load (for testing) - will crash if db does not exist.
 //SQLite.deleteDatabaseSync('planit.db')
@@ -31,7 +31,7 @@ export default function App() {
   }, []);
 
   const [semesters, setSemesters] = useState<Semester[]>([]); // List of all semesters
-  const [selectedSemester, setSelectedSemester] = useState<Semester>({id:0, title:"", start_date:"", end_date:""}) // Selected semester for tasks
+  const [selectedSemester, setSelectedSemester] = useState<Semester>({id:0, title:"", start_date:new Date(), end_date:new Date()}) // Selected semester for tasks
   const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false); // For welcome screen when no semesters exist
 
   return (
@@ -46,7 +46,7 @@ export default function App() {
         <View>
           <Text style={styles.welcomeText}>Welcome!</Text>
           <Button title="Create New Semester to Start" onPress={() => setNewSemesterModalVisible(true)} />
-          <NewSemesterForm
+          <NewSemesterModal
             visible={newSemesterModalVisible}
             onClose={() => setNewSemesterModalVisible(false)}
             db = {db}
