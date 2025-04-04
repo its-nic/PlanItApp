@@ -4,7 +4,6 @@ import {
   getSemesters,
   saveSelectedSemester,
 } from "../../database/db";
-import Semester from "../../types/Semester";
 import {
   Modal,
   ScrollView,
@@ -12,11 +11,11 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Button,
   Alert,
 } from "react-native";
 import { useState } from "react";
 import NewSemesterModal from "./NewSemesterModal";
+import Semester from "../../types/Semester";
 
 interface ManageSemestersModalProps {
   visible: boolean;
@@ -108,9 +107,18 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
           </ScrollView>
 
           <View style={styles.bottomButtons}>
-            <Button title="Create New Semester" color="#32CD32" onPress={() => setNewSemesterModalVisible(true)} />
-            <View style={styles.spacer} />
-            <Button title="Close" color="#FF6347" onPress={onClose} />
+            <TouchableOpacity
+              style={styles.newSemesterButton}
+              onPress={() => setNewSemesterModalVisible(true)}
+            >
+              <Text style={styles.buttonText}>Create New Semester</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -130,7 +138,7 @@ const styles = StyleSheet.create({
   modalBackground: {
     flex: 1,
     backgroundColor: "#f2f2f2",
-    paddingTop: 60,
+    paddingTop: 30,
   },
   modalContainer: {
     flex: 1,
@@ -174,30 +182,42 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     backgroundColor: "#1E90FF",
-    paddingVertical: 6,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
   deleteButton: {
     backgroundColor: "#FF4C4C",
-    paddingVertical: 6,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
   disabledButton: {
     opacity: 0.5,
   },
+  newSemesterButton: {
+    backgroundColor: "#32CD32",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  closeButton: {
+    backgroundColor: "#FF6347",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
   buttonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 16,
   },
   bottomButtons: {
-    marginTop: 10,
+    marginTop: 20,
     paddingBottom: 20,
-  },
-  spacer: {
-    height: 10,
   },
 });
 
