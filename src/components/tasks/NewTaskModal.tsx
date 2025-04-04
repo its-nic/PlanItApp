@@ -36,6 +36,7 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState<string>("");
+  const [length, setLength] = useState("");
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
@@ -57,11 +58,16 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
       alert("Please enter a task title.");
       return;
     }
+    if (!length) {
+      alert("Please enter task minutes.");
+      return;
+    }
     if (dueDate && !dueTime) {
       alert("Please enter a due time.");
       return;
     }
-    await addTask(db, selectedSemester, title.trim(), description.trim(), dueTime);
+    const formattedLength = Number(length);
+    await addTask(db, selectedSemester, title.trim(), description.trim(), dueTime, formattedLength);
     await getUnscheduledTasks(db, selectedSemester, unscheduledTasksStateSetter);
     handleClose();
   };
@@ -72,6 +78,7 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
     setDescription("");
     setDueDate(null);
     setDueTime(null);
+    setLength("");
   }
 
   return (
@@ -83,25 +90,51 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
         <ScrollView contentContainerStyle={styles.modalContainer}>
           <Text style={styles.title}>Create a Task</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Task Title"
-            placeholderTextColor={"#B3B3B3"}
-            value={title}
-            onChangeText={setTitle}
-            returnKeyType="done"
-          />
+          <View>
+            <Text>Task Name:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Study for Algebra Test"
+              placeholderTextColor={"#B3B3B3"}
+              value={title}
+              onChangeText={setTitle}
+              returnKeyType="done"
+            />
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Description (optional)"
-            placeholderTextColor={"#B3B3B3"}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
+          <View>
+            <Text>Notes (optional):</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Chapters 3 & 4 from textbook."
+              placeholderTextColor={"#B3B3B3"}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />  
+          </View>
+
+          <View>
+            <Text>Minutes to Complete:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 150"
+              placeholderTextColor={"#B3B3B3"}
+              keyboardType="numeric"
+              maxLength={3}
+              value={length}
+              onChangeText={(text) => {
+                const filtered = text.replace(/[^0-9]/g, '').replace(/^0+/, '');
+                setLength(filtered);
+              }}
+              returnKeyType="done"
+            />
+          </View>
+
+
+
 
           <TouchableOpacity
             style={styles.datePickerButton}

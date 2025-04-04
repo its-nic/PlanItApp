@@ -22,7 +22,7 @@ export async function initializeDB(db: SQLite.SQLiteDatabase) {
         description TEXT,
         due_date TEXT,
         start_time TEXT,
-        end_time TEXT,
+        length_minutes INTEGER DEFAULT 0,
         completed INTEGER DEFAULT 0,
         FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
       );
@@ -108,11 +108,12 @@ export async function getUnscheduledTasks(db: SQLite.SQLiteDatabase, selectedSem
     const allRows: any = await result.getAllAsync();
     const unscheduledTasks: Task[] = allRows.map((row: any) => ({
       id: row.id,
+      semester_id: row.semester_id,
       title: row.title,
       description: row.description ? row.description : "",
       due_date: row.due_date ? new Date(row.due_date) : null,
       start_time: null,
-      end_time: null,
+      length_minutes: row.length_minutes,
       completed: row.completed === 1,
     }));
     unscheduledTasksStateSetter(unscheduledTasks);
@@ -135,11 +136,12 @@ export async function getScheduledTasks(db: SQLite.SQLiteDatabase, selectedSemes
     const allRows: any = await result.getAllAsync();
     const unscheduledTasks: Task[] = allRows.map((row: any) => ({
       id: row.id,
+      semester_id: row.semester_id,
       title: row.title,
       description: row.description ? row.description : "",
       due_date: row.due_date ? new Date(row.due_date) : null,
       start_time: new Date(row.start_time),
-      end_time: new Date(row.end_time),
+      length_minutes: row.length_minutes,
       completed: row.completed === 1,
     }));
     scheduledTasksStateSetter(unscheduledTasks);
@@ -153,16 +155,17 @@ export async function getScheduledTasks(db: SQLite.SQLiteDatabase, selectedSemes
 };
 
 // Add a new task to the database
-export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semester, title: string, description: string, due_date: Date | null,) {
+export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semester, title: string, description: string, due_date: Date | null, length_minutes: number) {
   const statement = await db.prepareAsync(
-    `INSERT INTO tasks (semester_id, title, description, due_date) VALUES ($semester_id, $title, $description, $due_date)`
+    `INSERT INTO tasks (semester_id, title, description, due_date, length_minutes) VALUES ($semester_id, $title, $description, $due_date, $length_minutes)`
   );
   try {
-    const result = await statement.executeAsync({
+    await statement.executeAsync({
       $semester_id: selectedSemester.id,
       $title: title,
       $description: description ? description : null,
       $due_date: due_date ? due_date.toISOString() : null,
+      $length_minutes: length_minutes,
     });
     console.log('Task added successfully:');
   }

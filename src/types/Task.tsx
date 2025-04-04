@@ -5,7 +5,7 @@ type Task = {
   description: string;
   due_date: Date | null;
   start_time: Date | null;
-  end_time: Date | null;
+  length_minutes: number;
   completed: boolean;
   };
 

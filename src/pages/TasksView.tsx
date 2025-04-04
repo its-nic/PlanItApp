@@ -22,6 +22,12 @@ interface TaskViewProps {
   scheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
+const formatLength = (minutes: number): string => {
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hrs ? hrs + 'hr ' : ''}${mins ? mins + 'min' : ''}`;
+}
+
 const TasksView: React.FC<TaskViewProps> = ({
   db,
   selectedSemester,
@@ -38,7 +44,13 @@ const TasksView: React.FC<TaskViewProps> = ({
         {unscheduledTasks.map((task: Task) => {
           return (
             <View key={task.id} style={styles.taskItem}>
-              <Text>{task.title}</Text>
+              <Text>ID: {task.id}</Text>
+              <Text>SemeterID: {task.semester_id}</Text>
+              <Text>Title: {task.title}</Text>
+              {task.description && <Text>Description: {task.description}</Text>}
+              {task.due_date && <Text>Due: {task.due_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</Text>}
+              <Text>Length: {formatLength(task.length_minutes)}</Text>
+              <Text>Complete: {task.completed ? "Yes" : "No"}</Text>
             </View>
           )
         })}
