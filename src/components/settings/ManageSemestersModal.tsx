@@ -5,13 +5,13 @@ import {
   saveSelectedSemester,
 } from "../../database/db";
 import {
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
 import { useState } from "react";
 import NewSemesterModal from "./NewSemesterModal";
