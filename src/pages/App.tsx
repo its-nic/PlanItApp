@@ -9,11 +9,12 @@ import CalendarView from './CalendarView';
 import TasksView from './TasksView';
 import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
-import NewSemesterForm from '../components/settings/NewSemesterForm';
+import NewSemesterForm from '../components/settings/NewSemesterModal';
 import Semester from '../types/Semester';
 
 // Reset database on app load (for testing) - will crash if db does not exist.
 //SQLite.deleteDatabaseSync('planit.db')
+console.log("Opening DB...");
 
 const db = SQLite.openDatabaseSync('planit.db'); // Open DB
 const Tab = createBottomTabNavigator(); // Create bottom nav bar

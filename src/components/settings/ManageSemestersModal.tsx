@@ -13,9 +13,10 @@ import {
   TouchableOpacity,
   View,
   Button,
+  Alert,
 } from "react-native";
 import { useState } from "react";
-import NewSemesterForm from "./NewSemesterForm";
+import NewSemesterModal from "./NewSemesterModal";
 
 interface ManageSemestersModalProps {
   visible: boolean;
@@ -43,38 +44,67 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
       <View style={styles.modalBackground}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Manage Semesters</Text>
+          <Text style={styles.modalSubtitle}>Active Semester: {selectedSemester.title}</Text>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {semesters.map((semester) => (
-              <View key={semester.id} style={styles.semesterItem}>
-                <Text style={styles.semesterText}>{semester.title}</Text>
-                <Text style={styles.semesterDate}>{`Start: ${semester.start_date}`}</Text>
-                <Text style={styles.semesterDate}>{`End: ${semester.end_date}`}</Text>
+            {semesters.map((semester) => {
+              const isSelected = selectedSemester.id === semester.id;
 
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.selectButton}
-                    onPress={() => {
-                      selectedSemesterStateSetter(semester);
-                      saveSelectedSemester(semester);
-                      onClose();
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Select</Text>
-                  </TouchableOpacity>
+              return (
+                <View key={semester.id} style={styles.semesterItem}>
+                  <Text style={styles.semesterText}>{semester.title}</Text>
+                  <Text style={styles.semesterDate}>{`Start: ${semester.start_date}`}</Text>
+                  <Text style={styles.semesterDate}>{`End: ${semester.end_date}`}</Text>
 
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => {
-                      deleteSemester(db, semester.id);
-                      getSemesters(db, semestersStateSetter);
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Delete</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.selectButton,
+                        isSelected && styles.disabledButton,
+                      ]}
+                      disabled={isSelected}
+                      onPress={() => {
+                        selectedSemesterStateSetter(semester);
+                        saveSelectedSemester(semester);
+                      }}
+                    >
+                      <Text style={styles.buttonText}>
+                        {isSelected ? "Active" : "Set Active"}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.deleteButton,
+                      isSelected && styles.disabledButton,
+                      ]}
+                      disabled={isSelected}
+                      onPress={() => {
+                        Alert.alert(
+                          "Confirm Delete",
+                          "Are you sure you want to delete this semester? This will also delete all tasks associated with it.",
+                          [
+                            {
+                              text: "Cancel",
+                              style: "cancel",
+                            },
+                            {
+                              text: "Delete",
+                              style: "destructive",
+                              onPress: () => {
+                                deleteSemester(db, semester.id);
+                                getSemesters(db, semestersStateSetter);
+                              },
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={styles.buttonText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))}
+              )
+            })}
           </ScrollView>
 
           <View style={styles.bottomButtons}>
@@ -84,7 +114,7 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
           </View>
         </View>
 
-        <NewSemesterForm
+        <NewSemesterModal
           visible={newSemesterModalVisible}
           onClose={() => setNewSemesterModalVisible(false)}
           db={db}
@@ -109,8 +139,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "600",
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: "center",
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+    marginBottom: 20,
   },
   scrollContent: {
     paddingBottom: 20,
@@ -147,6 +183,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   buttonText: {
     color: "white",
