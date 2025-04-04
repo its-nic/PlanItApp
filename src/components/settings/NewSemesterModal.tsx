@@ -29,7 +29,7 @@ interface NewSemesterFormProps {
   >;
 }
 
-const NewSemesterForm: React.FC<NewSemesterFormProps> = ({
+const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
   visible,
   onClose,
   db,
@@ -38,7 +38,11 @@ const NewSemesterForm: React.FC<NewSemesterFormProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + 4); // Default to 4 months from now
+    return date;
+  });
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
@@ -63,7 +67,6 @@ const NewSemesterForm: React.FC<NewSemesterFormProps> = ({
     await getSelectedSemester(selectedSemesterStateSetter);
     await getSemesters(db, semestersStateSetter);
     onClose();
-    alert("New semester created successfully!");
     setTitle("");
   };
 
@@ -173,4 +176,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewSemesterForm;
+export default NewSemesterModal;
