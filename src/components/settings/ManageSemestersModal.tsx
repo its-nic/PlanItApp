@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   selectButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#1a65eb",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
   deleteButton: {
-    backgroundColor: "#FF4C4C",
+    backgroundColor: "#DC3545",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   newSemesterButton: {
-    backgroundColor: "#32CD32",
+    backgroundColor: "#28A745",
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginBottom: 10,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeButton: {
-    backgroundColor: "#FF6347",
+    backgroundColor: "#DC3545",
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 6,

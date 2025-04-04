@@ -82,6 +82,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="e.g. Fall 2025"
+            placeholderTextColor={"#B3B3B3"}
             value={title}
             onChangeText={setTitle}
             returnKeyType="done"
@@ -126,6 +127,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onConfirm={handleStartDateConfirm}
             onCancel={() => setShowStartDatePicker(false)}
             maximumDate={endDate}
+            themeVariant="light"
           />
           <DateTimePickerModal
             isVisible={showEndDatePicker}
@@ -133,6 +135,7 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             onConfirm={handleEndDateConfirm}
             onCancel={() => setShowEndDatePicker(false)}
             minimumDate={startDate}
+            themeVariant="light"
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   datePickerButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#1A65EB",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   createButton: {
-    backgroundColor: "#32CD32",
+    backgroundColor: "#28A745",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
     width: "45%",
   },
   cancelButton: {
-    backgroundColor: "#FF4C4C",
+    backgroundColor: "#DC3545",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
