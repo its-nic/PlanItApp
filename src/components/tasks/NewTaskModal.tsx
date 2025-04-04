@@ -1,8 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import {
-  addSemester,
-  getSelectedSemester,
-  getSemesters,
+  addTask,
+  getUnscheduledTasks,
 } from "../../database/db";
 import React, { useState } from "react";
 import {
@@ -18,53 +17,62 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Semester from "../../types/Semester";
+import Task from "../../types/Task";
 
-interface NewSemesterModalProps {
+interface NewTaskModalProps {
   visible: boolean;
   onClose: () => void;
   db: SQLite.SQLiteDatabase;
-  semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>;
-  selectedSemesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>;
+  selectedSemester: Semester;
+  unscheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
-const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
+const NewTaskModal: React.FC<NewTaskModalProps> = ({
   visible,
   onClose,
   db,
-  semestersStateSetter,
-  selectedSemesterStateSetter,
+  selectedSemester,
+  unscheduledTasksStateSetter,
 }) => {
   const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(() => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + 4); // Default to 4 months from now
-    return date;
-  });
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [description, setDescription] = useState<string>("");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [dueTime, setDueTime] = useState<Date | null>(null);
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showDueTimePicker, setShowDueTimePicker] = useState(false);
 
-  const handleStartDateConfirm = (date: Date) => {
-    setStartDate(date);
-    setShowStartDatePicker(false);
+  const handleDueDateConfirm = (date: Date) => {
+    setDueDate(date);
+    setDueTime(null);
+    setShowDueDatePicker(false);
   };
 
-  const handleEndDateConfirm = (date: Date) => {
-    setEndDate(date);
-    setShowEndDatePicker(false);
-  };
+  const handleDueTimeConfirm = (date: Date) => {
+    setDueTime(date);
+    setShowDueTimePicker(false);
+  }
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      alert("Please enter a semester title.");
+      alert("Please enter a task title.");
       return;
     }
-    await addSemester(db, title.trim(), startDate, endDate);
-    await getSelectedSemester(selectedSemesterStateSetter);
-    await getSemesters(db, semestersStateSetter);
+    if (dueDate && !dueTime) {
+      alert("Please enter a due time.");
+      return;
+    }
+    await addTask(db, selectedSemester, title.trim(), description.trim(), dueTime);
+    await getUnscheduledTasks(db, selectedSemester, unscheduledTasksStateSetter);
+    handleClose();
+  };
+
+  const handleClose = () => {
     onClose();
     setTitle("");
-  };
+    setDescription("");
+    setDueDate(null);
+    setDueTime(null);
+  }
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -73,39 +81,52 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
         style={styles.overlay}
       >
         <ScrollView contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.title}>Create a New Semester</Text>
+          <Text style={styles.title}>Create a Task</Text>
 
           <TextInput
             style={styles.input}
-            placeholder="e.g. Fall 2025"
+            placeholder="Task Title"
             placeholderTextColor={"#B3B3B3"}
             value={title}
             onChangeText={setTitle}
             returnKeyType="done"
           />
 
-          <TouchableOpacity
-            style={styles.datePickerButton}
-            onPress={() => setShowStartDatePicker(true)}
-            >
-            <Text style={styles.buttonText}>
-              Start Date: {startDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
-            </Text>
-          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Description (optional)"
+            placeholderTextColor={"#B3B3B3"}
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
 
           <TouchableOpacity
             style={styles.datePickerButton}
-            onPress={() => setShowEndDatePicker(true)}
+            onPress={() => setShowDueDatePicker(true)}
             >
             <Text style={styles.buttonText}>
-              End Date: {endDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}
+              {dueDate ? `Due Date: ${dueDate.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}` : "Select Due Date (optional)"}
             </Text>
           </TouchableOpacity>
+
+          {dueDate && (
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => setShowDueTimePicker(true)}
+            >
+              <Text style={styles.buttonText}>
+                {dueTime ? `Due Time: ${dueTime.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}` : "Select Due Time"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => onClose()}
+              onPress={() => handleClose()}
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
@@ -118,23 +139,30 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
           </View>
 
           <DateTimePickerModal
-            isVisible={showStartDatePicker}
+            isVisible={showDueDatePicker}
             mode="date"
-            onConfirm={handleStartDateConfirm}
-            onCancel={() => setShowStartDatePicker(false)}
-            maximumDate={endDate}
+            onConfirm={handleDueDateConfirm}
+            onCancel={() => setShowDueDatePicker(false)}
+            minimumDate={selectedSemester.start_date}
+            maximumDate={selectedSemester.end_date}
             locale="en"
             themeVariant="light"
           />
+
+          {dueDate &&
           <DateTimePickerModal
-            isVisible={showEndDatePicker}
-            mode="date"
-            onConfirm={handleEndDateConfirm}
-            onCancel={() => setShowEndDatePicker(false)}
-            minimumDate={startDate}
+            isVisible={showDueTimePicker}
+            mode="time"
+            onConfirm={handleDueTimeConfirm}
+            onCancel={() => setShowDueTimePicker(false)}
+            date={new Date(dueDate.setHours(0, 0, 0, 0))}
+            minimumDate={new Date(dueDate.setHours(0, 0, 0, 0))}
+            maximumDate={new Date(dueDate.setHours(23, 59, 59, 999))}
             locale="en"
             themeVariant="light"
-          />
+          />}
+          
+
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -207,4 +235,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewSemesterModal;
+export default NewTaskModal;
