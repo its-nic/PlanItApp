@@ -10,11 +10,11 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Semester from "../../types/Semester";
@@ -87,29 +87,37 @@ const NewSemesterModal: React.FC<NewSemesterFormProps> = ({
             returnKeyType="done"
           />
 
-          <View style={styles.datePickerWrapper}>
-            <Button
-              title={`Start Date: ${startDate.toLocaleDateString()}`}
-              onPress={() => setShowStartDatePicker(true)}
-              color="#1E90FF"
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => setShowStartDatePicker(true)}
+            >
+            <Text style={styles.buttonText}>
+              Start Date: {startDate.toLocaleDateString()}
+            </Text>
+          </TouchableOpacity>
 
-          <View style={styles.datePickerWrapper}>
-            <Button
-              title={`End Date: ${endDate.toLocaleDateString()}`}
-              onPress={() => setShowEndDatePicker(true)}
-              color="#1E90FF"
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => setShowEndDatePicker(true)}
+            >
+            <Text style={styles.buttonText}>
+              End Date: {endDate.toLocaleDateString()}
+            </Text>
+          </TouchableOpacity>
 
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonWrapper}>
-              <Button title="Cancel" onPress={onClose} color="#FF6347" />
-            </View>
-            <View style={styles.buttonWrapper}>
-              <Button title="Create" onPress={handleSubmit} color="#32CD32" />
-            </View>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => onClose()}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.buttonText}>Create</Text>
+            </TouchableOpacity>
           </View>
 
           <DateTimePickerModal
@@ -154,6 +162,40 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  datePickerButton: {
+    backgroundColor: "#1E90FF",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  createButton: {
+    backgroundColor: "#32CD32",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    width: "45%",
+  },
+  cancelButton: {
+    backgroundColor: "#FF4C4C",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    width: "45%",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -161,18 +203,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     fontSize: 16,
-  },
-  datePickerWrapper: {
-    marginBottom: 15,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  buttonWrapper: {
-    flex: 1,
-    marginHorizontal: 5,
   },
 });
 
