@@ -106,20 +106,18 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
             })}
           </ScrollView>
 
-          <View style={styles.bottomButtons}>
-            <TouchableOpacity
-              style={styles.newSemesterButton}
-              onPress={() => setNewSemesterModalVisible(true)}
-            >
-              <Text style={styles.buttonText}>Create New Semester</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.newSemesterButton}
+            onPress={() => setNewSemesterModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>Create New Semester</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+          >
+            <Text style={styles.buttonText}>Close</Text>
+          </TouchableOpacity>
         </View>
 
         <NewSemesterModal
@@ -199,6 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#28A745",
     paddingVertical: 12,
     paddingHorizontal: 12,
+    marginTop: 20,
     marginBottom: 10,
     borderRadius: 6,
     alignItems: "center",
@@ -207,6 +206,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC3545",
     paddingVertical: 12,
     paddingHorizontal: 12,
+    marginBottom: 20,
     borderRadius: 6,
     alignItems: "center",
   },
@@ -214,10 +214,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
-  },
-  bottomButtons: {
-    marginTop: 20,
-    paddingBottom: 20,
   },
 });
 

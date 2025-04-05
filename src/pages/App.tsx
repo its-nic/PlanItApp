@@ -108,7 +108,12 @@ export default function App() {
             <Tab.Screen 
               name="Calendar" 
               children={() => <CalendarView
-
+                db={db}
+                selectedSemester={selectedSemester}
+                unscheduledTasks={unscheduledTasks}
+                unscheduledTasksStateSetter={setUnscheduledTasks}
+                scheduledTasks={scheduledTasks}
+                scheduledTasksStateSetter={setScheduledTasks}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (
