@@ -12,7 +12,7 @@ import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
 import Semester from '../types/Semester';
 import NewSemesterModal from '../components/settings/NewSemesterModal';
-import Task from '../types/Task';
+import {Task} from '../types/Task';
 
 
 // Reset database (for testing) - will crash if db does not exist.

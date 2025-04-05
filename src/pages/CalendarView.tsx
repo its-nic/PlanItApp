@@ -1,14 +1,18 @@
-import * as SQLite from "expo-sqlite";
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { AgendaList, CalendarProvider, DateData, ExpandableCalendar, WeekCalendar } from 'react-native-calendars';
-import Semester from "../types/Semester";
-import Task from "../types/Task";
-import { getSelectedSemester } from "../database/db";
-import AgendaItem from "../components/calendar/AgendaItem";
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, Alert, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import {
+  ExpandableCalendar,
+  TimelineList,
+  CalendarProvider,
+  CalendarUtils,
+  TimelineEventProps,
+} from 'react-native-calendars';
+import { groupBy } from 'lodash';
+import { Task } from '../types/Task';
+import Semester from '../types/Semester';
+import * as SQLite from 'expo-sqlite';
 
-// @ts-ignore fix for defaultProps warning: https://github.com/wix/react-native-calendars/issues/2455
-ExpandableCalendar.defaultProps = undefined;
+const { width } = Dimensions.get('window');
 
 interface CalendarViewProps {
   db: SQLite.SQLiteDatabase;
@@ -19,111 +23,193 @@ interface CalendarViewProps {
   scheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
+const INITIAL_TIME = { hour: 9, minutes: 0 };
+
 const CalendarView: React.FC<CalendarViewProps> = ({
-  db,
-  selectedSemester,
-  unscheduledTasks,
-  unscheduledTasksStateSetter,
   scheduledTasks,
   scheduledTasksStateSetter,
+  unscheduledTasks,
+  unscheduledTasksStateSetter,
 }) => {
-  const [agendaItems, setAgendaItems] = useState<any[]>([]);
+  const [currentDate, setCurrentDate] = useState(CalendarUtils.getCalendarDateString(new Date()));
+  const [showSidebar, setShowSidebar] = useState(false);
 
-  // Generate list of string dates between range
-  const generateDatesInRange = (startDate: Date, endDate: Date): string[] => {
-    const dates: string[] = [];
-    var iteratorDate = new Date(startDate);
-    iteratorDate.setHours(0, 0, 0, 0);
-    while (iteratorDate <= endDate) {
-      dates.push(iteratorDate.toLocaleDateString('en-CA'))
-      iteratorDate.setDate(iteratorDate.getDate() + 1);
-    }
-    return dates;
-  }
+  const events: TimelineEventProps[] = useMemo(() => {
+    return scheduledTasks
+      .filter(task => task.start_time && task.end_time)
+      .map(task => ({
+        id: String(task.id),
+        start: task.start_time ? task.start_time.toISOString() : '',
+        end: task.end_time ? task.end_time.toISOString() : '',
+        title: task.title,
+        color: '#1A65EB',
+      }));
+  }, [scheduledTasks]);
 
-  // Group tasks by date
-  const mapScheduledTasksToDates = (scheduledTasks: Task[], dates: string[]) => {
-    const groupedTasks: any = {};
-    scheduledTasks.forEach(task => {
-      if (task.start_time != null) {
-        const taskDate = task.start_time.toLocaleDateString('en-CA');
-        if (groupedTasks[taskDate]) {
-          groupedTasks[taskDate].push(task);
-        }
-        else {
-          groupedTasks[taskDate] = [task];
-        }
-      }
-    });
-    const agenda = dates.map((date) => {
-      return {
-        title: date,
-        data: groupedTasks[date] || [{}],
-      }
-    });
-    return agenda;
-  };
+  const eventsByDate = useMemo(() => {
+    return groupBy(events, e => CalendarUtils.getCalendarDateString(e.start));
+  }, [events]);
 
-  // Update agendaItems when scheduledTasks or semester dates change
-  useEffect(() => {
-    const startDate = selectedSemester.start_date;
-    const endDate = selectedSemester.end_date;
+  const createNewEvent = useCallback(
+    (timeString: string, timeObj: { date?: string; hour: number; minutes: number }) => {
+      if (!timeObj.date) return;
 
-    // Generate a list of all dates within the selected semester range
-    const datesInRange = generateDatesInRange(startDate, endDate);
-    const filteredDates = datesInRange.filter((date) => {
-      const currDate = new Date();
-      currDate.setHours(0, 0, 0, 0);
-      return date >= currDate.toLocaleDateString('en-CA');
-    });
+      const start = new Date(`${timeObj.date} ${timeObj.hour.toString().padStart(2, '0')}:${timeObj.minutes.toString().padStart(2, '0')}`);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 1);
 
-    // Map scheduled tasks to the agenda items for each day
-    const agenda = mapScheduledTasksToDates(scheduledTasks, filteredDates);
-    setAgendaItems(agenda);
-  }, [scheduledTasks, selectedSemester]);
+      const newTask: Task = {
+        id: Math.floor(Math.random() * 100000),
+        title: 'New Event',
+        start_time: start,
+        end_time: end,
+        semester_id: 0,
+        description: '',
+        due_date: null,
+        due_time: null,
+        completed: false,
+      };
 
-  const renderItem = useCallback(({ item }: any) => {
-    return <AgendaItem item={item} />;
-  }, []);
+      scheduledTasksStateSetter(prev => [...prev, newTask]);
+    },
+    [scheduledTasksStateSetter]
+  );
+
+  const approveNewEvent = useCallback(
+    (timeString: string, timeObj: { date?: string; hour: number; minutes: number }) => {
+      if (!timeObj.date) return;
+
+      const start = new Date(`${timeObj.date} ${timeObj.hour.toString().padStart(2, '0')}:${timeObj.minutes.toString().padStart(2, '0')}`);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 1);
+
+      Alert.prompt('New Event', 'Enter event title', [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+        },
+        {
+          text: 'Create',
+          onPress: (eventTitle) => {
+            const newTask: Task = {
+              id: Math.floor(Math.random() * 100000),
+              title: eventTitle?.trim() || 'New Event',
+              start_time: start,
+              end_time: end,
+              semester_id: 0,
+              description: '',
+              due_date: null,
+              due_time: null,
+              completed: false,
+            };
+
+            scheduledTasksStateSetter(prev => [...prev, newTask]);
+          },
+        },
+      ]);
+    },
+    [scheduledTasksStateSetter]
+  );
 
   return (
-    <CalendarProvider
-      date={new Date().toDateString().split('T')[0]}
-      showTodayButton
-      disabledOpacity={0.1}
-      theme={{
-        todayButtonTextColor: '#28A745',
-        todayButtonFontSize: 16,
-        todayButtonPosition: 'right',
-      }}
-    >
-      <ExpandableCalendar
-        minDate={selectedSemester.start_date.toLocaleDateString('en-CA')}
-        maxDate={selectedSemester.end_date.toLocaleDateString('en-CA')}
-        theme={{
-          selectedDayBackgroundColor: '#1A65EB',
-          todayTextColor: '#28A745',
-        }}        
-      />
+    <View style={styles.container}>
+      <CalendarProvider
+        date={currentDate}
+        onDateChanged={setCurrentDate}
+        showTodayButton
+      >
+        <ExpandableCalendar firstDay={1} />
 
-      <AgendaList
-      sections={agendaItems}
-      renderItem={renderItem}
-      sectionStyle={styles.section}
-      />
-    </CalendarProvider>
+        <TimelineList
+          events={eventsByDate}
+          timelineProps={{
+            format24h: true,
+            onBackgroundLongPress: createNewEvent,
+            onBackgroundLongPressOut: approveNewEvent,
+            scrollOffset: 0,
+            unavailableHours: [
+              { start: 0, end: 6 },
+              { start: 22, end: 24 }
+            ]
+          }}
+          initialTime={INITIAL_TIME}
+        />
+      </CalendarProvider>
+
+      {showSidebar && (
+        <View style={styles.unscheduledContainer}>
+          {unscheduledTasks.map(task => (
+            <Text
+              key={task.id}
+              style={styles.unscheduledTask}
+              onPress={() => {
+                const now = new Date();
+                const end = new Date(now);
+                end.setHours(now.getHours() + 1);
+
+                const updatedTask: Task = {
+                  ...task,
+                  start_time: now,
+                  end_time: end,
+                };
+
+                scheduledTasksStateSetter(prev => [...prev, updatedTask]);
+                unscheduledTasksStateSetter(prev => prev.filter(t => t.id !== task.id));
+              }}
+            >
+              {task.title}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowSidebar(prev => !prev)}
+      >
+        <Text style={styles.fabText}>{showSidebar ? 'Hide' : 'Show'}</Text>
+      </TouchableOpacity>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  section: {
+  container: { flex: 1 },
+  unscheduledContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#f3f3f3',
+    padding: 10,
+    borderRadius: 8,
+    maxWidth: width * 0.4,
+    zIndex: 10,
+  },
+  unscheduledTask: {
+    marginVertical: 5,
+    padding: 8,
+    backgroundColor: '#FFD700',
+    borderRadius: 4,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
     backgroundColor: '#1A65EB',
-    borderTopWidth: 5,
-    borderColor: 'white',
-    elevation: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabText: {
     color: 'white',
-    fontSize: 16,
-    textTransform: 'capitalize',
+    fontWeight: 'bold',
   },
 });
 
