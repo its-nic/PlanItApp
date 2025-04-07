@@ -1,16 +1,13 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, Alert, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import {
-  ExpandableCalendar,
-  TimelineList,
-  CalendarProvider,
-  CalendarUtils,
-  TimelineEventProps,
-} from 'react-native-calendars';
+import { ExpandableCalendar, TimelineList, CalendarProvider, CalendarUtils, TimelineEventProps } from 'react-native-calendars';
 import { groupBy } from 'lodash';
 import { Task } from '../types/Task';
-import Semester from '../types/Semester';
+import { Semester } from '../types/Semester';
 import * as SQLite from 'expo-sqlite';
+
+// @ts-ignore fix for defaultProps warning: https://github.com/wix/react-native-calendars/issues/2455
+ExpandableCalendar.defaultProps = undefined;
 
 const { width } = Dimensions.get('window');
 

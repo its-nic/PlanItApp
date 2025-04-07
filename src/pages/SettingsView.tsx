@@ -2,7 +2,7 @@ import * as SQLite from 'expo-sqlite';
 import React, { useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import NewSemesterForm from "../components/settings/NewSemesterModal";
-import Semester from '../types/Semester';
+import { Semester } from '../types/Semester';
 import ManageSemestersModal from '../components/settings/ManageSemestersModal';
 
 interface SettingsViewProps {

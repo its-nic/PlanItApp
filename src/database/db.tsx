@@ -1,8 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // For app settings
 import React from 'react';
-import Semester from '../types/Semester';
-import Task from '../types/Task';
+import { Semester } from '../types/Semester';
+import { Task } from '../types/Task';
 
 /// Create DB tables if they do not exist
 export async function initializeDB(db: SQLite.SQLiteDatabase) {

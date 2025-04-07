@@ -4,13 +4,13 @@ import * as SQLite from 'expo-sqlite';
 import { getScheduledTasks, getSelectedSemester, getSemesters, getUnscheduledTasks, initializeDB } from '../database/db';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { Button, Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import CalendarView from './CalendarView';
 import TasksView from './TasksView';
 import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
-import Semester from '../types/Semester';
+import { Semester } from '../types/Semester';
 import NewSemesterModal from '../components/settings/NewSemesterModal';
 import {Task} from '../types/Task';
 
@@ -67,9 +67,16 @@ export default function App() {
 
       {selectedSemester.id === 0 ? (
         // Show welcome screen if no semesters exist
-        <View>
+        <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeText}>Welcome!</Text>
-          <Button title="Create New Semester to Start" onPress={() => setNewSemesterModalVisible(true)} />
+          <Text style={styles.welcomeSubtext}>Create A New Semester to Start:</Text>
+          <TouchableOpacity 
+            style={styles.newSemesterButton}
+            onPress={() => setNewSemesterModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>Create New Semester</Text>
+          </TouchableOpacity>
+          
           <NewSemesterModal
             visible={newSemesterModalVisible}
             onClose={() => setNewSemesterModalVisible(false)}
@@ -173,9 +180,30 @@ const styles = StyleSheet.create({
     height: 50,
     borderTopWidth: 1,
   },
+  welcomeContainer: {
+    paddingHorizontal: 20,
+  },
   welcomeText: {
     fontSize: 24,
     textAlign: 'center',
     marginVertical: 20,
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  newSemesterButton: {
+    backgroundColor: "#28A745",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginTop: 20,
+    marginBottom: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

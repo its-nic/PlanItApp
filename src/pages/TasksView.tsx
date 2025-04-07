@@ -1,14 +1,8 @@
 import * as SQLite from "expo-sqlite";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
-import Semester from "../types/Semester";
-import Task from "../types/Task";
+import { Semester } from "../types/Semester";
+import { Task } from "../types/Task";
 import NewTaskModal from "../components/tasks/NewTaskModal";
 
 
@@ -49,7 +43,7 @@ const TasksView: React.FC<TaskViewProps> = ({
               <Text>Title: {task.title}</Text>
               {task.description && <Text>Description: {task.description}</Text>}
               {task.due_date && <Text>Due: {task.due_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</Text>}
-              <Text>Length: {formatLength(task.length_minutes)}</Text>
+              <Text>Length: {/*formatLength(task.length_minutes)*/}</Text>
               <Text>Complete: {task.completed ? "Yes" : "No"}</Text>
             </View>
           )

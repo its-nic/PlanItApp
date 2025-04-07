@@ -1,23 +1,10 @@
 import * as SQLite from "expo-sqlite";
-import {
-  addTask,
-  getUnscheduledTasks,
-} from "../../database/db";
+import { addTask, getUnscheduledTasks, } from "../../database/db";
 import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import Semester from "../../types/Semester";
-import Task from "../../types/Task";
+import { Semester } from "../../types/Semester";
+import { Task } from "../../types/Task";
 
 interface NewTaskModalProps {
   visible: boolean;

@@ -5,4 +5,4 @@ type Semester = {
   end_date: Date;
   };
 
-export default Semester;
+export type { Semester };
