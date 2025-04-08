@@ -21,13 +21,12 @@ export async function initializeDB(db: SQLite.SQLiteDatabase) {
         title TEXT NOT NULL,
         description TEXT,
         due_date TEXT,
-        start_time TEXT,
-        length_minutes INTEGER DEFAULT 0,
+        start TEXT NOT NULL,
+        end TEXT NOT NULL,
         completed INTEGER DEFAULT 0,
         FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
       );
     `);
-    console.log('Database initialized');
   }
   catch (error) {
     console.error('Error initializing the database:', error);
@@ -46,19 +45,6 @@ export async function getSemesters(db: SQLite.SQLiteDatabase, semestersStateSett
   semestersStateSetter(semesters);
 };
 
-export async function getSemester(db: SQLite.SQLiteDatabase, semesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>) {
-  const row: any = await db.getFirstAsync('SELECT * FROM semesters WHERE id = $id');
-  if(row != null){
-    const semester: Semester = {
-      id: row.id,
-      title: row.title,
-      start_date: new Date(row.start_date),
-      end_date: new Date (row.end_date),
-    };
-    semesterStateSetter(semester);
-  }
-}
-
 // Add a new semester to the database
 export async function addSemester(db: SQLite.SQLiteDatabase, title: string, start_date: Date, end_date: Date) {
   const statement = await db.prepareAsync(
@@ -70,7 +56,6 @@ export async function addSemester(db: SQLite.SQLiteDatabase, title: string, star
       $start_date: start_date.toISOString(),
       $end_date: end_date.toISOString(),
     });
-    console.log('Semester added successfully:');
     await saveSelectedSemester({id:result.lastInsertRowId, title, start_date, end_date});
   }
   catch (error) {
@@ -88,7 +73,6 @@ export async function deleteSemester(db: SQLite.SQLiteDatabase, id: number) {
   );
   try {
     await statement.executeAsync({ $id: id });
-    console.log('Semester deleted successfully');
   }
   catch (error) {
     console.error('Error deleting semester:', error);
@@ -98,66 +82,66 @@ export async function deleteSemester(db: SQLite.SQLiteDatabase, id: number) {
   }
 }
 
-// Get all unscheduled tasks from the database
-export async function getUnscheduledTasks(db: SQLite.SQLiteDatabase, selectedSemester: Semester, unscheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>) {
+// Get all tasks from the database
+export async function getTasks(db: SQLite.SQLiteDatabase, selectedSemester: Semester, tasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>) {
   const statement = await db.prepareAsync(
-    `SELECT * FROM tasks WHERE start_time IS NULL AND semester_id = $semester_id`
+    `SELECT * FROM tasks WHERE semester_id = $semester_id`
   );
   try {
     const result = await statement.executeAsync({$semester_id: selectedSemester.id,});
     const allRows: any = await result.getAllAsync();
-    const unscheduledTasks: Task[] = allRows.map((row: any) => ({
+    const tasks: Task[] = allRows.map((row: any) => ({
       id: row.id,
       semester_id: row.semester_id,
       title: row.title,
       description: row.description ? row.description : "",
       due_date: row.due_date ? new Date(row.due_date) : null,
-      start_time: null,
-      length_minutes: row.length_minutes,
+      start: new Date(row.start),
+      end: new Date(row.end),
       completed: row.completed === 1,
     }));
-    unscheduledTasksStateSetter(unscheduledTasks);
+    tasksStateSetter(tasks);
   }
   catch (error) {
-    console.error('Error getting unscheduled tasks:', error);
+    console.error('Error getting tasks:', error);
   }
   finally {
     await statement.finalizeAsync();
   }
 };
 
-// Get all scheduled tasks from the database
-export async function getScheduledTasks(db: SQLite.SQLiteDatabase, selectedSemester: Semester, scheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>) {
+// Get task by ID from the database
+export async function getTask(db: SQLite.SQLiteDatabase, id: number, taskStateSetter: React.Dispatch<React.SetStateAction<Task>>) {
   const statement = await db.prepareAsync(
-    `SELECT * FROM tasks WHERE start_time IS NOT NULL AND semester_id = $semester_id`
+    `SELECT * FROM tasks WHERE id = $id`
   );
   try {
-    const result = await statement.executeAsync({$semester_id: selectedSemester.id,});
-    const allRows: any = await result.getAllAsync();
-    const unscheduledTasks: Task[] = allRows.map((row: any) => ({
+    const result = await statement.executeAsync({$id: id,});
+    const row: any = await result.getFirstAsync();
+    const task: Task = {
       id: row.id,
       semester_id: row.semester_id,
       title: row.title,
       description: row.description ? row.description : "",
       due_date: row.due_date ? new Date(row.due_date) : null,
-      start_time: new Date(row.start_time),
-      length_minutes: row.length_minutes,
+      start: new Date(row.start),
+      end: new Date(row.end),
       completed: row.completed === 1,
-    }));
-    scheduledTasksStateSetter(unscheduledTasks);
+    };
+    taskStateSetter(task);
   }
   catch (error) {
-    console.error('Error getting scheduled tasks:', error);
+    console.error('Error getting task:', error);
   }
   finally {
     await statement.finalizeAsync();
   }
-};
+}
 
 // Add a new task to the database
-export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semester, title: string, description: string, due_date: Date | null, length_minutes: number) {
+export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semester, title: string, description: string, due_date: Date | null, start: Date, end: Date) {
   const statement = await db.prepareAsync(
-    `INSERT INTO tasks (semester_id, title, description, due_date, length_minutes) VALUES ($semester_id, $title, $description, $due_date, $length_minutes)`
+    `INSERT INTO tasks (semester_id, title, description, due_date, start, end) VALUES ($semester_id, $title, $description, $due_date, $start, $end)`
   );
   try {
     await statement.executeAsync({
@@ -165,12 +149,56 @@ export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semes
       $title: title,
       $description: description ? description : null,
       $due_date: due_date ? due_date.toISOString() : null,
-      $length_minutes: length_minutes,
+      $start: start.toISOString(),
+      $end: end.toISOString(),
     });
-    console.log('Task added successfully:');
   }
   catch (error) {
     console.error('Error adding task:', error);
+  }
+  finally {
+    await statement.finalizeAsync();
+  }
+}
+
+// Update task in the database
+export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: string, description: string, due_date: Date | null, start: Date, end: Date, completed: boolean) {
+  const statement = await db.prepareAsync(
+    `UPDATE tasks SET title = $title, description = $description, due_date = $due_date, start = $start, end = $end, completed = $completed WHERE id = $id`
+  );
+  try {
+    await statement.executeAsync({
+      $id: id,
+      $title: title,
+      $description: description ? description : null,
+      $due_date: due_date ? due_date.toISOString() : null,
+      $start: start.toISOString(),
+      $end: end.toISOString(),
+      $completed: completed ? 1 : 0,
+    });
+  }
+  catch (error) {
+    console.error('Error updating task:', error);
+  }
+  finally {
+    await statement.finalizeAsync();
+  }
+}
+
+// Update the task time in the database
+export async function updateTaskTime(db: SQLite.SQLiteDatabase, id: number, start: Date, end: Date) {
+  const statement = await db.prepareAsync(
+    `UPDATE tasks SET start = $start, end = $end WHERE id = $id`
+  );
+  try {
+    await statement.executeAsync({
+      $id: id,
+      $start: start.toISOString(),
+      $end: end.toISOString(),
+    });
+  }
+  catch (error) {
+    console.error('Error updating task time:', error);
   }
   finally {
     await statement.finalizeAsync();
@@ -190,7 +218,6 @@ export async function getSelectedSemester(selectedSemesterStateSetter: React.Dis
         end_date: new Date(parsedValue.end_date),
       };
       selectedSemesterStateSetter(selectedSemester);
-      console.log('Selected semester loaded');
     }
   }
   catch (error) {
@@ -208,7 +235,6 @@ export async function saveSelectedSemester(semester: Semester) {
       end_date: semester.end_date.toISOString(),
     });
     await AsyncStorage.setItem('selected-semester', jsonValue);
-    console.log('Selected semester updated');
   }
   catch (error) {
     console.error('Error saving selected semester:', error);

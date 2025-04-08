@@ -1,33 +1,49 @@
 import * as SQLite from "expo-sqlite";
-import { addTask, getUnscheduledTasks, } from "../../database/db";
-import React, { useState } from "react";
+import { getTasks, updateTask, } from "../../database/db";
+import React, { useEffect, useState } from "react";
 import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Semester } from "../../types/Semester";
 import { Task } from "../../types/Task";
 
-interface NewTaskModalProps {
+interface EditTaskModalProps {
   visible: boolean;
   onClose: () => void;
   db: SQLite.SQLiteDatabase;
   selectedSemester: Semester;
-  unscheduledTasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
+  task: Task,
+  tasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
-const NewTaskModal: React.FC<NewTaskModalProps> = ({
+const EditTaskModal: React.FC<EditTaskModalProps> = ({
   visible,
   onClose,
   db,
   selectedSemester,
-  unscheduledTasksStateSetter,
+  task,
+  tasksStateSetter,
 }) => {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [length, setLength] = useState("");
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
+  const [start, setStart] = useState<Date>(new Date());
+  const [end, setEnd] = useState<Date>(new Date());
+  const [completed, setCompleted] = useState<boolean>(false);
+  const [minutes, setMinutes] = useState<string>("");
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showDueTimePicker, setShowDueTimePicker] = useState(false);
+
+  useEffect( () => {
+    setTitle(task.title);
+    setDescription(task.description);
+    setDueDate(task.due_date);
+    setDueTime(task.due_date);
+    setStart(task.start);
+    setEnd(task.end);
+    setCompleted(task.completed);
+    setMinutes(((task.end.getTime() - task.start.getTime()) / 60000).toString());
+  }, [task]);
 
   const handleDueDateConfirm = (date: Date) => {
     setDueDate(date);
@@ -45,7 +61,7 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
       alert("Please enter a task title.");
       return;
     }
-    if (!length) {
+    if (!minutes) {
       alert("Please enter task minutes.");
       return;
     }
@@ -53,10 +69,9 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
       alert("Please enter a due time.");
       return;
     }
-    const formattedLength = Number(length);
-    await addTask(db, selectedSemester, title.trim(), description.trim(), dueTime, formattedLength);
-    await getUnscheduledTasks(db, selectedSemester, unscheduledTasksStateSetter);
-    handleClose();
+    await updateTask(db, task.id, title.trim(), description.trim(), dueTime, start, new Date(start.getTime() + Number(minutes) * 60000), completed);
+    await getTasks(db, selectedSemester, tasksStateSetter);
+    onClose();
   };
 
   const handleClose = () => {
@@ -65,7 +80,6 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
     setDescription("");
     setDueDate(null);
     setDueTime(null);
-    setLength("");
   }
 
   return (
@@ -75,7 +89,7 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
         style={styles.overlay}
       >
         <ScrollView contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.title}>Create a Task</Text>
+          <Text style={styles.title}>Edit Task</Text>
 
           <View>
             <Text>Task Name:</Text>
@@ -111,17 +125,14 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
               placeholderTextColor={"#B3B3B3"}
               keyboardType="numeric"
               maxLength={3}
-              value={length}
+              value={minutes}
               onChangeText={(text) => {
                 const filtered = text.replace(/[^0-9]/g, '').replace(/^0+/, '');
-                setLength(filtered);
+                setMinutes(filtered);
               }}
               returnKeyType="done"
             />
           </View>
-
-
-
 
           <TouchableOpacity
             style={styles.datePickerButton}
@@ -146,15 +157,15 @@ const NewTaskModal: React.FC<NewTaskModalProps> = ({
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => handleClose()}
+              onPress={() => onClose()}
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.createButton}
+              style={styles.updateButton}
               onPress={handleSubmit}
             >
-              <Text style={styles.buttonText}>Create</Text>
+              <Text style={styles.buttonText}>Update</Text>
             </TouchableOpacity>
           </View>
 
@@ -224,7 +235,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  createButton: {
+  updateButton: {
     backgroundColor: "#28A745",
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -255,4 +266,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewTaskModal;
+export default EditTaskModal;

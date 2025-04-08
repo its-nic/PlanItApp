@@ -47,13 +47,12 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
     }
     await addSemester(db, title.trim(), startDate, endDate);
     await getSelectedSemester(selectedSemesterStateSetter);
-    await getSemesters(db, semestersStateSetter);
     onClose();
     setTitle("");
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent>
+    <Modal visible={visible} animationType="fade" transparent={false}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
