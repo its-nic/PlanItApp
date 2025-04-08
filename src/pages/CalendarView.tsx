@@ -57,6 +57,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <TouchableOpacity style={styles.button} onPress={() => visibleDays === 1 ? setVisibleDays(7) : setVisibleDays(1)}>
           <Ionicons name={visibleDays === 1 ? "calendar-outline" : "today-outline"} size={20} color={'white'} />
         </TouchableOpacity>
+
+        <EditTaskModal
+          visible={editTaskModalVisible}
+          onClose={() => setEditTaskModalVisible(false)}
+          db={db}
+          selectedSemester={selectedSemester}
+          task={selectedTask}
+          tasksStateSetter={tasksStateSetter}
+      />
       </View>
 
       <CalendarKit
@@ -81,14 +90,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           end: { dateTime: task.end.toISOString() },
           color: '#1A65EB',
         }))}
-      />
-      <EditTaskModal
-        visible={editTaskModalVisible}
-        onClose={() => setEditTaskModalVisible(false)}
-        db={db}
-        selectedSemester={selectedSemester}
-        task={selectedTask}
-        tasksStateSetter={tasksStateSetter}
       />
     </View>
   );
