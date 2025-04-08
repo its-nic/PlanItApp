@@ -130,6 +130,7 @@ export default function App() {
                 semestersStateSetter={setSemesters}
                 selectedSemester={selectedSemester}
                 selectedSemesterStateSetter={setSelectedSemester}
+                tasks={tasks}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (

@@ -53,6 +53,7 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
                       onPress={() => {
                         selectedSemesterStateSetter(semester);
                         saveSelectedSemester(semester);
+                        onClose();
                       }}
                     >
                       <Text style={styles.buttonText}>
@@ -110,7 +111,7 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
 
         <NewSemesterModal
           visible={newSemesterModalVisible}
-          onClose={() => setNewSemesterModalVisible(false)}
+          onClose={() => {setNewSemesterModalVisible(false); onClose();}}
           db={db}
           semestersStateSetter={semestersStateSetter}
           selectedSemesterStateSetter={selectedSemesterStateSetter}
