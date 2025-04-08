@@ -205,6 +205,22 @@ export async function updateTaskTime(db: SQLite.SQLiteDatabase, id: number, star
   }
 }
 
+// Delete a task from the database
+export async function deleteTask(db: SQLite.SQLiteDatabase, id: number) {
+  const statement = await db.prepareAsync(
+    `DELETE FROM tasks WHERE id = $id`
+  );
+  try {
+    await statement.executeAsync({ $id: id });
+  }
+  catch (error) {
+    console.error('Error deleting task:', error);
+  }
+  finally {
+    await statement.finalizeAsync();
+  }
+}
+
 // Get the selected semester from the async storage
 export async function getSelectedSemester(selectedSemesterStateSetter: React.Dispatch<React.SetStateAction<Semester>>) {
   try {

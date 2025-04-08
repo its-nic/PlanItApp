@@ -1,8 +1,9 @@
 import * as SQLite from "expo-sqlite";
-import { getTasks, updateTask, } from "../../database/db";
+import { deleteTask, getTasks, updateTask, } from "../../database/db";
 import React, { useEffect, useState } from "react";
-import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Alert } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Semester } from "../../types/Semester";
 import { Task } from "../../types/Task";
 
@@ -28,7 +29,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
   const [start, setStart] = useState<Date>(new Date());
-  const [end, setEnd] = useState<Date>(new Date());
   const [completed, setCompleted] = useState<boolean>(false);
   const [minutes, setMinutes] = useState<string>("");
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
@@ -40,7 +40,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setDueDate(task.due_date);
     setDueTime(task.due_date);
     setStart(task.start);
-    setEnd(task.end);
     setCompleted(task.completed);
     setMinutes(((task.end.getTime() - task.start.getTime()) / 60000).toString());
   }, [task]);
@@ -74,14 +73,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     onClose();
   };
 
-  const handleClose = () => {
-    onClose();
-    setTitle("");
-    setDescription("");
-    setDueDate(null);
-    setDueTime(null);
-  }
-
   return (
     <Modal visible={visible} animationType="fade" transparent>
       <KeyboardAvoidingView
@@ -89,7 +80,35 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         style={styles.overlay}
       >
         <ScrollView contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.title}>Edit Task</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Edit Task</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => {
+                Alert.alert(
+                  "Confirm Delete",
+                  "Are you sure you want to delete this task?",
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel",
+                    },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => {
+                        deleteTask(db, task.id);
+                        getTasks(db, selectedSemester, tasksStateSetter);
+                        onClose();
+                      },
+                    },
+                  ]
+                );
+              }}
+              >
+              <Ionicons name="trash" size={15} color={'white'} />
+            </TouchableOpacity>
+          </View>
 
           <View>
             <Text>Task Name:</Text>
@@ -215,6 +234,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 10,
   },
+  titleContainer: {
+    position: "relative",
+    marginBottom: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
     fontSize: 20,
     fontWeight: "600",
@@ -250,6 +275,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: "center",
     width: "45%",
+  },
+  deleteButton: {
+    position: "absolute",
+    backgroundColor: "#DC3545",
+    right: 0,
+    top: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
   },
   buttonText: {
     color: "white",
