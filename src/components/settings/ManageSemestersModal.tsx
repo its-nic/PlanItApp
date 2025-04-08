@@ -1,21 +1,9 @@
 import * as SQLite from "expo-sqlite";
-import {
-  deleteSemester,
-  getSemesters,
-  saveSelectedSemester,
-} from "../../database/db";
-import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { deleteSemester, getSemesters, saveSelectedSemester, } from "../../database/db";
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
 import NewSemesterModal from "./NewSemesterModal";
-import Semester from "../../types/Semester";
+import { Semester } from "../../types/Semester";
 
 interface ManageSemestersModalProps {
   visible: boolean;
@@ -65,6 +53,7 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
                       onPress={() => {
                         selectedSemesterStateSetter(semester);
                         saveSelectedSemester(semester);
+                        onClose();
                       }}
                     >
                       <Text style={styles.buttonText}>
@@ -122,7 +111,7 @@ const ManageSemestersModal: React.FC<ManageSemestersModalProps> = ({
 
         <NewSemesterModal
           visible={newSemesterModalVisible}
-          onClose={() => setNewSemesterModalVisible(false)}
+          onClose={() => {setNewSemesterModalVisible(false); onClose();}}
           db={db}
           semestersStateSetter={semestersStateSetter}
           selectedSemesterStateSetter={selectedSemesterStateSetter}

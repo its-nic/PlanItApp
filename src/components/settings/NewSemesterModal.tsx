@@ -1,23 +1,9 @@
 import * as SQLite from "expo-sqlite";
-import {
-  addSemester,
-  getSelectedSemester,
-  getSemesters,
-} from "../../database/db";
+import { addSemester, getSelectedSemester, getSemesters } from "../../database/db";
 import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import Semester from "../../types/Semester";
+import { Semester } from "../../types/Semester";
 
 interface NewSemesterModalProps {
   visible: boolean;
@@ -61,13 +47,12 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
     }
     await addSemester(db, title.trim(), startDate, endDate);
     await getSelectedSemester(selectedSemesterStateSetter);
-    await getSemesters(db, semestersStateSetter);
     onClose();
     setTitle("");
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent>
+    <Modal visible={visible} animationType="fade" transparent={false}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}

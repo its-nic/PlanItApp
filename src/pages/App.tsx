@@ -1,16 +1,16 @@
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
-import { getScheduledTasks, getSelectedSemester, getSemesters, getUnscheduledTasks, initializeDB } from '../database/db';
+import { getTasks, getSelectedSemester, getSemesters, initializeDB } from '../database/db';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { Button, Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import CalendarView from './CalendarView';
 import TasksView from './TasksView';
 import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
-import Semester from '../types/Semester';
+import { Semester } from '../types/Semester';
 import NewSemesterModal from '../components/settings/NewSemesterModal';
 import {Task} from '../types/Task';
 
@@ -32,8 +32,7 @@ export default function App() {
   const [semesters, setSemesters] = useState<Semester[]>([]); // List of all semesters
   const [selectedSemester, setSelectedSemester] = useState<Semester>({id:0, title:"", start_date:new Date(), end_date:new Date()}) // Selected semester for tasks
   const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false); // For welcome screen when no semesters exist
-  const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]); // List of all tasks that do not have a scheduled time
-  const [scheduledTasks, setScheduledTasks] = useState<Task[]>([]); // List of all tasks that have a scheduled time
+  const [tasks, setTasks] = useState<Task[]>([]); // List of all tasks
 
   // For app startup DB initialization
   useEffect( () => {
@@ -47,8 +46,7 @@ export default function App() {
 
   useEffect( () => {
     getSemesters(db, setSemesters); // Get all semesters from DB
-    getUnscheduledTasks(db, selectedSemester, setUnscheduledTasks); // Get unscheduled tasks from DB
-    getScheduledTasks(db, selectedSemester, setScheduledTasks); // Get scheduled tasks from DB
+    getTasks(db, selectedSemester, setTasks); // Get tasks from DB
   }, [selectedSemester])
 
   if (loading) {
@@ -67,9 +65,16 @@ export default function App() {
 
       {selectedSemester.id === 0 ? (
         // Show welcome screen if no semesters exist
-        <View>
+        <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeText}>Welcome!</Text>
-          <Button title="Create New Semester to Start" onPress={() => setNewSemesterModalVisible(true)} />
+          <Text style={styles.welcomeSubtext}>Create A New Semester to Start:</Text>
+          <TouchableOpacity 
+            style={styles.newSemesterButton}
+            onPress={() => setNewSemesterModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>Create New Semester</Text>
+          </TouchableOpacity>
+          
           <NewSemesterModal
             visible={newSemesterModalVisible}
             onClose={() => setNewSemesterModalVisible(false)}
@@ -94,10 +99,8 @@ export default function App() {
               children={() => <TasksView
                 db={db}
                 selectedSemester={selectedSemester}
-                unscheduledTasks={unscheduledTasks}
-                unscheduledTasksStateSetter={setUnscheduledTasks}
-                scheduledTasks={scheduledTasks}
-                scheduledTasksStateSetter={setScheduledTasks}
+                tasks={tasks}
+                tasksStateSetter={setTasks}
                 />}
               options={{
                 tabBarIcon: ({ color, size }) => (
@@ -110,10 +113,8 @@ export default function App() {
               children={() => <CalendarView
                 db={db}
                 selectedSemester={selectedSemester}
-                unscheduledTasks={unscheduledTasks}
-                unscheduledTasksStateSetter={setUnscheduledTasks}
-                scheduledTasks={scheduledTasks}
-                scheduledTasksStateSetter={setScheduledTasks}
+                tasks={tasks}
+                tasksStateSetter={setTasks}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (
@@ -129,6 +130,7 @@ export default function App() {
                 semestersStateSetter={setSemesters}
                 selectedSemester={selectedSemester}
                 selectedSemesterStateSetter={setSelectedSemester}
+                tasks={tasks}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (
@@ -173,9 +175,30 @@ const styles = StyleSheet.create({
     height: 50,
     borderTopWidth: 1,
   },
+  welcomeContainer: {
+    paddingHorizontal: 20,
+  },
   welcomeText: {
     fontSize: 24,
     textAlign: 'center',
     marginVertical: 20,
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  newSemesterButton: {
+    backgroundColor: "#28A745",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginTop: 20,
+    marginBottom: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
