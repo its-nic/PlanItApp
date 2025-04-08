@@ -211,8 +211,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             locale="en"
             themeVariant="light"
           />}
-          
-
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -281,9 +279,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC3545",
     right: 0,
     top: 0,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 50,
   },
   buttonText: {
     color: "white",
