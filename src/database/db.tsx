@@ -24,6 +24,7 @@ export async function initializeDB(db: SQLite.SQLiteDatabase) {
         start TEXT NOT NULL,
         end TEXT NOT NULL,
         completed INTEGER DEFAULT 0,
+        color TEXT NOT NULL DEFAULT '#A0C4FF',
         FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
       );
     `);
@@ -99,6 +100,7 @@ export async function getTasks(db: SQLite.SQLiteDatabase, selectedSemester: Seme
       start: new Date(row.start),
       end: new Date(row.end),
       completed: row.completed === 1,
+      color: row.color,
     }));
     tasksStateSetter(tasks);
   }
@@ -127,6 +129,7 @@ export async function getTask(db: SQLite.SQLiteDatabase, id: number, taskStateSe
       start: new Date(row.start),
       end: new Date(row.end),
       completed: row.completed === 1,
+      color: row.color,
     };
     taskStateSetter(task);
   }
@@ -162,9 +165,9 @@ export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semes
 }
 
 // Update task in the database
-export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: string, description: string, due_date: Date | null, start: Date, end: Date, completed: boolean) {
+export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: string, description: string, due_date: Date | null, start: Date, end: Date, completed: boolean, color: string) {
   const statement = await db.prepareAsync(
-    `UPDATE tasks SET title = $title, description = $description, due_date = $due_date, start = $start, end = $end, completed = $completed WHERE id = $id`
+    `UPDATE tasks SET title = $title, description = $description, due_date = $due_date, start = $start, end = $end, completed = $completed, color = $color WHERE id = $id`
   );
   try {
     await statement.executeAsync({
@@ -175,6 +178,7 @@ export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: s
       $start: start.toISOString(),
       $end: end.toISOString(),
       $completed: completed ? 1 : 0,
+      $color: color,
     });
   }
   catch (error) {
@@ -199,6 +203,25 @@ export async function updateTaskTime(db: SQLite.SQLiteDatabase, id: number, star
   }
   catch (error) {
     console.error('Error updating task time:', error);
+  }
+  finally {
+    await statement.finalizeAsync();
+  }
+}
+
+// Update the task completed in the database
+export async function updateTaskComplete(db: SQLite.SQLiteDatabase, id: number, completed:boolean) {
+  const statement = await db.prepareAsync(
+    `UPDATE tasks SET completed = $completed WHERE id = $id`
+  );
+  try {
+    await statement.executeAsync({
+      $id: id,
+      $completed: completed ? 1 : 0,
+    });
+  }
+  catch (error) {
+    console.error('Error updating task completion status:', error);
   }
   finally {
     await statement.finalizeAsync();

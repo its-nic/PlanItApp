@@ -30,9 +30,12 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [dueTime, setDueTime] = useState<Date | null>(null);
   const [start, setStart] = useState<Date>(new Date());
   const [completed, setCompleted] = useState<boolean>(false);
+  const [color, setColor] = useState<string>("#87CEEB");
   const [minutes, setMinutes] = useState<string>("");
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showDueTimePicker, setShowDueTimePicker] = useState(false);
+
+  const colorOptions = ["#A0C4FF", "#BDB2FF", "#FFC6FF", "#FFADAD", "#FFD6A5", "#FDFFB6", "#9BF6FF"];
 
   useEffect( () => {
     setTitle(task.title);
@@ -41,6 +44,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setDueTime(task.due_date);
     setStart(task.start);
     setCompleted(task.completed);
+    setColor(task.color);
     setMinutes(((task.end.getTime() - task.start.getTime()) / 60000).toString());
   }, [task]);
 
@@ -68,7 +72,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       alert("Please enter a due time.");
       return;
     }
-    await updateTask(db, task.id, title.trim(), description.trim(), dueTime, start, new Date(start.getTime() + Number(minutes) * 60000), completed);
+    await updateTask(db, task.id, title.trim(), description.trim(), dueTime, start, new Date(start.getTime() + Number(minutes) * 60000), completed, color);
     await getTasks(db, selectedSemester, tasksStateSetter);
     onClose();
   };
@@ -137,6 +141,23 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </View>
 
           <View>
+            <Text>Select Task Color:</Text>
+            <View style={styles.colorPickerContainer}>
+              {colorOptions.map((colorOption, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.colorOption, { backgroundColor: colorOption }]}
+                  onPress={() => setColor(colorOption)}  // Update color state
+                >
+                  {color === colorOption && (
+                    <Ionicons name="checkmark-circle" size={24} color="white" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View>
             <Text>Minutes to Complete:</Text>
             <TextInput
               style={styles.input}
@@ -172,6 +193,13 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               </Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            style={completed ? styles.incompleteButton : styles.completeButton}
+            onPress={() => setCompleted(!completed)}
+          >
+            <Text style={styles.buttonText}>{completed ? "Set Incomplete" : "Set Complete"}</Text>
+          </TouchableOpacity>
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
@@ -245,6 +273,23 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
+  colorPickerContainer: {
+    flexDirection: "row",   // Arrange color options in a row
+    flexWrap: "wrap",       // Allow wrapping of color options
+    marginTop: 10,
+    marginBottom: 15,
+    justifyContent: "space-around",  // Space out the color options
+  },
+  colorOption: {
+    width: 30,
+    height: 30,
+    borderRadius: 6,
+    margin: 5,
+    borderWidth: 2,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -252,6 +297,22 @@ const styles = StyleSheet.create({
   },
   datePickerButton: {
     backgroundColor: "#1A65EB",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  completeButton: {
+    backgroundColor: "#28A745",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  incompleteButton: {
+    backgroundColor: "#DC3545",
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,

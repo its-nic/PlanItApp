@@ -24,7 +24,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   const [visibleStartDate, setVisibleStartDate] = useState(new Date());
   const [visibleDays, setVisibleDays] = useState(7);
-  const [selectedTask, setSelectedTask] = useState<Task>({id:0, semester_id:selectedSemester.id, title:"", description:"", due_date:null, start:new Date(), end:new Date(), completed:false});
+  const [selectedTask, setSelectedTask] = useState<Task>({id:0, semester_id:selectedSemester.id, title:"", description:"", due_date:null, start:new Date(), end:new Date(), completed:false, color:"#87CEEB"});
   const [editTaskModalVisible, setEditTaskModalVisible] = useState(false);
 
   const handleEventCreate = (event: any) => {
@@ -65,7 +65,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           selectedSemester={selectedSemester}
           task={selectedTask}
           tasksStateSetter={tasksStateSetter}
-      />
+        />
       </View>
 
       <CalendarKit
@@ -85,10 +85,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onPressEvent={handleEventSelect}
         events={tasks.map(task => ({
           id: task.id.toString(),
-          title: task.title,
+          title: task.completed ? "✅\n" + task.title : task.title,
           start: { dateTime: task.start.toISOString() },
           end: { dateTime: task.end.toISOString() },
-          color: '#1A65EB',
+          color: task.completed ? '#CAFFBF' : task.color,
         }))}
       />
     </View>

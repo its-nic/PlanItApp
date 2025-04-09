@@ -7,6 +7,7 @@ type Task = {
   start: Date;
   end: Date;
   completed: boolean;
+  color: string;
 }
 
 export type { Task };
