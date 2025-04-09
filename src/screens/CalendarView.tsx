@@ -5,7 +5,7 @@ import { Task } from '../types/Task';
 import { Semester } from '../types/Semester';
 import * as SQLite from 'expo-sqlite';
 import CalendarKit from '@howljs/calendar-kit';
-import { addTask, getTask, getTasks, updateTaskTime } from '../database/db';
+import { addTask, getTask, getTasks, updateTaskTime, deleteTask } from '../storage/db';
 import EditTaskModal from '../components/tasks/EditTaskModal';
 
 interface CalendarViewProps {
@@ -38,10 +38,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   }
 
   const handleEventSelect = async (event: any) => {
-    await getTask(db, Number(event.id), setSelectedTask);
-    if(selectedTask.id != 0) {
+    await getTask(db, Number(event.id), (task) => {
+      setSelectedTask(task);
       setEditTaskModalVisible(true);
-    }
+    });    
   }
 
   return (
@@ -59,13 +59,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         </TouchableOpacity>
 
         <EditTaskModal
-          visible={editTaskModalVisible}
-          onClose={() => setEditTaskModalVisible(false)}
-          db={db}
-          selectedSemester={selectedSemester}
-          task={selectedTask}
-          tasksStateSetter={tasksStateSetter}
-      />
+  visible={editTaskModalVisible}
+  onClose={() => setEditTaskModalVisible(false)}
+  task={selectedTask}
+  updateExistingTask={async (id, values, completed) => {
+    await updateTaskTime(db, id, values.startTime!, values.endTime!); // or whatever logic you want
+    await getTasks(db, selectedSemester, tasksStateSetter);
+  }}
+  removeTask={async (id) => {
+    await deleteTask(db, id);
+    await getTasks(db, selectedSemester, tasksStateSetter);
+  }}
+/>
+
       </View>
 
       <CalendarKit

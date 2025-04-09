@@ -21,8 +21,8 @@ export async function initializeDB(db: SQLite.SQLiteDatabase) {
         title TEXT NOT NULL,
         description TEXT,
         due_date TEXT,
-        start TEXT NOT NULL,
-        end TEXT NOT NULL,
+        start TEXT NULLABLE,
+        end TEXT NULLABLE,
         completed INTEGER DEFAULT 0,
         FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
       );
@@ -139,30 +139,79 @@ export async function getTask(db: SQLite.SQLiteDatabase, id: number, taskStateSe
 }
 
 // Add a new task to the database
-export async function addTask(db: SQLite.SQLiteDatabase, selectedSemester: Semester, title: string, description: string, due_date: Date | null, start: Date, end: Date) {
+export async function addTask(
+  db: SQLite.SQLiteDatabase,
+  selectedSemester: Semester,
+  title: string,
+  description: string,
+  due_date: Date | null,
+  start: Date | null,
+  end: Date | null
+) {
   const statement = await db.prepareAsync(
-    `INSERT INTO tasks (semester_id, title, description, due_date, start, end) VALUES ($semester_id, $title, $description, $due_date, $start, $end)`
+    `INSERT INTO tasks (semester_id, title, description, due_date, start, end) 
+     VALUES ($semester_id, $title, $description, $due_date, $start, $end)`
   );
   try {
+    const finalTitle = title?.trim() ? title : await getNextTaskName(db);
     await statement.executeAsync({
       $semester_id: selectedSemester.id,
-      $title: title,
+      $title: finalTitle,
       $description: description ? description : null,
       $due_date: due_date ? due_date.toISOString() : null,
-      $start: start.toISOString(),
-      $end: end.toISOString(),
+      $start: start ? start.toISOString() : null, // ✅ fixed
+      $end: end ? end.toISOString() : null,       // ✅ fixed
     });
-  }
-  catch (error) {
-    console.error('Error adding task:', error);
-  }
-  finally {
+  } catch (error) {
+    console.error("Error adding task:", error);
+  } finally {
     await statement.finalizeAsync();
   }
 }
 
+
+
+export async function getNextTaskName(
+  db: SQLite.SQLiteDatabase,
+  baseName = "New Task"
+): Promise<string> {
+  const statement = await db.prepareAsync(
+    `SELECT title FROM tasks WHERE title LIKE ?`
+  );
+
+  try {
+    const result = await statement.executeAsync([`${baseName}%`]);
+    const rows: any[] = await result.getAllAsync();
+
+    const existingTitles = rows.map((row) => row.title);
+    let i = 1;
+    let newTitle = baseName;
+    while (existingTitles.includes(newTitle)) {
+      newTitle = `${baseName} ${i++}`;
+    }
+
+    return newTitle;
+  } catch (error) {
+    console.error("Error generating task name:", error);
+    return baseName;
+  } finally {
+    await statement.finalizeAsync();
+  }
+}
+
+
+
 // Update task in the database
-export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: string, description: string, due_date: Date | null, start: Date, end: Date, completed: boolean) {
+export async function updateTask(
+  db: SQLite.SQLiteDatabase,
+  id: number,
+  title: string,
+  description: string,
+  due_date: Date | null,
+  start: Date | null,
+  end: Date | null,
+  completed: boolean
+) {
   const statement = await db.prepareAsync(
     `UPDATE tasks SET title = $title, description = $description, due_date = $due_date, start = $start, end = $end, completed = $completed WHERE id = $id`
   );
@@ -170,20 +219,19 @@ export async function updateTask(db: SQLite.SQLiteDatabase, id: number, title: s
     await statement.executeAsync({
       $id: id,
       $title: title,
-      $description: description ? description : null,
+      $description: description || null,
       $due_date: due_date ? due_date.toISOString() : null,
-      $start: start.toISOString(),
-      $end: end.toISOString(),
+      $start: start ? start.toISOString() : null,
+      $end: end ? end.toISOString() : null,
       $completed: completed ? 1 : 0,
     });
-  }
-  catch (error) {
-    console.error('Error updating task:', error);
-  }
-  finally {
+  } catch (error) {
+    console.error("Error updating task:", error);
+  } finally {
     await statement.finalizeAsync();
   }
 }
+
 
 // Update the task time in the database
 export async function updateTaskTime(db: SQLite.SQLiteDatabase, id: number, start: Date, end: Date) {

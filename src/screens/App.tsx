@@ -1,7 +1,7 @@
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
-import { getTasks, getSelectedSemester, getSemesters, initializeDB } from '../database/db';
+import { getTasks, getSelectedSemester, getSemesters, initializeDB } from '../storage/db';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
