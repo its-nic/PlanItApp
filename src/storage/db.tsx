@@ -3,35 +3,138 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // For app
 import React from 'react';
 import { Semester } from '../types/Semester';
 import { Task } from '../types/Task';
+import { Assignment } from "../types/Assignment"; // Make sure this import exists
 
 /// Create DB tables if they do not exist
 export async function initializeDB(db: SQLite.SQLiteDatabase) {
   try {
     await db.execAsync(`PRAGMA foreign_keys = ON;`); // Enable foreign key constraints
     await db.execAsync(`
+      PRAGMA foreign_keys = ON;
+    
       CREATE TABLE IF NOT EXISTS semesters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL
       );
+    
+      CREATE TABLE IF NOT EXISTS assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        semester_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
+      );
+    
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         semester_id INTEGER NOT NULL,
+        g_id INTEGER,
         title TEXT NOT NULL,
         description TEXT,
         due_date TEXT,
         start TEXT NULLABLE,
         end TEXT NULLABLE,
         completed INTEGER DEFAULT 0,
-        FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE
+        FOREIGN KEY (semester_id) REFERENCES semesters (id) ON DELETE CASCADE,
+        FOREIGN KEY (assignment_id) REFERENCES assignments (id) ON DELETE SET NULL
       );
-    `);
+    `);    
   }
   catch (error) {
     console.error('Error initializing the database:', error);
   }
 };
+
+export async function addAssignment(
+  db: SQLite.SQLiteDatabase,
+  semester_id: number,
+  title: string
+) {
+  const statement = await db.prepareAsync(
+    `INSERT INTO assignments (semester_id, title) VALUES ($semester_id, $title)`
+  );
+  try {
+    await statement.executeAsync({ $semester_id: semester_id, $title: title });
+  } catch (error) {
+    console.error("Error adding assignment:", error);
+  } finally {
+    await statement.finalizeAsync();
+  }
+}
+
+export async function getAssignmentsWithTasks(
+  db: SQLite.SQLiteDatabase,
+  selectedSemester: Semester,
+  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
+) {
+  const assignmentsStmt = await db.prepareAsync(
+    `SELECT * FROM assignments WHERE semester_id = $semester_id`
+  );
+
+  try {
+    const assignmentsResult = await assignmentsStmt.executeAsync({ $semester_id: selectedSemester.id });
+    const assignmentsRaw: any[] = await assignmentsResult.getAllAsync();
+
+    const tasksStmt = await db.prepareAsync(
+      `SELECT * FROM tasks WHERE semester_id = $semester_id`
+    );
+    const tasksResult = await tasksStmt.executeAsync({ $semester_id: selectedSemester.id });
+    const tasksRaw: any[] = await tasksResult.getAllAsync();
+    await tasksStmt.finalizeAsync();
+
+    const allTasks: Task[] = tasksRaw.map((row) => ({
+      id: row.id,
+      semester_id: row.semester_id,
+      title: row.title,
+      description: row.description || "",
+      due_date: row.due_date ? new Date(row.due_date) : null,
+      start: row.start ? new Date(row.start) : null,
+      end: row.end ? new Date(row.end) : null,
+      completed: row.completed === 1,
+      assignment_id: row.assignment_id ?? null,
+    }));
+
+    const assignments: Assignment[] = assignmentsRaw.map((assignment) => ({
+      id: assignment.id,
+      title: assignment.title,
+      semester_id: assignment.semester_id,
+      tasks: allTasks.filter(task => task.assignment_id === assignment.id),
+    }));
+
+    // Optional: Add uncategorized tasks
+    const uncategorizedTasks = allTasks.filter(task => task.assignment_id === null);
+    if (uncategorizedTasks.length > 0) {
+      assignments.push({
+        id: -1,
+        title: "Uncategorized",
+        semester_id: selectedSemester.id,
+        tasks: uncategorizedTasks,
+      });
+    }
+
+    setAssignments(assignments);
+  } catch (error) {
+    console.error("Error loading assignments with tasks:", error);
+  } finally {
+    await assignmentsStmt.finalizeAsync();
+  }
+}
+
+export async function deleteAssignment(db: SQLite.SQLiteDatabase, id: number) {
+  const statement = await db.prepareAsync(
+    `DELETE FROM assignments WHERE id = $id`
+  );
+  try {
+    await statement.executeAsync({ $id: id });
+  } catch (error) {
+    console.error("Error deleting assignment:", error);
+  } finally {
+    await statement.finalizeAsync();
+  }
+}
+
+
 
 // Get all semesters from the database and set them to state
 export async function getSemesters(db: SQLite.SQLiteDatabase, semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>) {
@@ -199,6 +302,39 @@ export async function getNextTaskName(
   }
 }
 
+// storage/db.ts
+
+export async function createTask(
+  db: SQLite.SQLiteDatabase,
+  selectedSemester: Semester,
+  assignmentId: number | null, // Link to the assignment (can be null if not assigned)
+  title: string,
+  description: string,
+  due_date: Date | null,
+  start: Date | null,
+  end: Date | null
+) {
+  const statement = await db.prepareAsync(
+    `INSERT INTO tasks (semester_id, assignment_id, title, description, due_date, start, end) 
+     VALUES ($semester_id, $assignment_id, $title, $description, $due_date, $start, $end)`
+  );
+  
+  try {
+    await statement.executeAsync({
+      $semester_id: selectedSemester.id,
+      $assignment_id: assignmentId,  // This links the task to an assignment (optional)
+      $title: title,
+      $description: description || null,  // Optional: handle if description is empty
+      $due_date: due_date ? due_date.toISOString() : null,
+      $start: start ? start.toISOString() : null,
+      $end: end ? end.toISOString() : null,
+    });
+  } catch (error) {
+    console.error("Error creating task:", error);
+  } finally {
+    await statement.finalizeAsync();
+  }
+}
 
 
 // Update task in the database

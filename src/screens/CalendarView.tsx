@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Task } from '../types/Task';
@@ -21,28 +21,43 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   tasks,
   tasksStateSetter,
 }) => {
-
   const [visibleStartDate, setVisibleStartDate] = useState(new Date());
   const [visibleDays, setVisibleDays] = useState(7);
-  const [selectedTask, setSelectedTask] = useState<Task>({id:0, semester_id:selectedSemester.id, title:"", description:"", due_date:null, start:new Date(), end:new Date(), completed:false});
+  const [selectedTask, setSelectedTask] = useState<Task>({
+    id: 0,
+    semester_id: selectedSemester.id,
+    title: "",
+    description: "",
+    due_date: null,
+    start: new Date(),
+    end: new Date(),
+    completed: false,
+  });
   const [editTaskModalVisible, setEditTaskModalVisible] = useState(false);
 
+  // Create a new event (task)
   const handleEventCreate = (event: any) => {
     addTask(db, selectedSemester, "New Task", "", null, new Date(event.start.dateTime), new Date(event.end.dateTime));
     getTasks(db, selectedSemester, tasksStateSetter);
   }
 
+  // Update an existing task (event)
   const handleEventChange = (event: any) => {
     updateTaskTime(db, Number(event.id), new Date(event.start.dateTime), new Date(event.end.dateTime));
     getTasks(db, selectedSemester, tasksStateSetter);
   }
 
+  // Handle task selection for editing
   const handleEventSelect = async (event: any) => {
     await getTask(db, Number(event.id), (task) => {
       setSelectedTask(task);
       setEditTaskModalVisible(true);
-    });    
+    });
   }
+
+  useEffect(() => {
+    getTasks(db, selectedSemester, tasksStateSetter); // Ensure tasks are loaded on component mount
+  }, [db, selectedSemester]);
 
   return (
     <View style={styles.container}>
@@ -54,30 +69,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             year: 'numeric',
           })}
         </Text>
-        <TouchableOpacity style={styles.button} onPress={() => visibleDays === 1 ? setVisibleDays(7) : setVisibleDays(1)}>
+        <TouchableOpacity style={styles.button} onPress={() => setVisibleDays(visibleDays === 1 ? 7 : 1)}>
           <Ionicons name={visibleDays === 1 ? "calendar-outline" : "today-outline"} size={20} color={'white'} />
         </TouchableOpacity>
 
         <EditTaskModal
-  visible={editTaskModalVisible}
-  onClose={() => setEditTaskModalVisible(false)}
-  task={selectedTask}
-  updateExistingTask={async (id, values, completed) => {
-    await updateTaskTime(db, id, values.startTime!, values.endTime!); // or whatever logic you want
-    await getTasks(db, selectedSemester, tasksStateSetter);
-  }}
-  removeTask={async (id) => {
-    await deleteTask(db, id);
-    await getTasks(db, selectedSemester, tasksStateSetter);
-  }}
-/>
-
+          visible={editTaskModalVisible}
+          onClose={() => setEditTaskModalVisible(false)}
+          task={selectedTask}
+          updateExistingTask={async (id, values, completed) => {
+            await updateTaskTime(db, id, values.startTime!, values.endTime!); // Update task start and end times
+            await getTasks(db, selectedSemester, tasksStateSetter); // Refresh tasks
+          }}
+          removeTask={async (id) => {
+            await deleteTask(db, id);
+            await getTasks(db, selectedSemester, tasksStateSetter); // Refresh tasks
+          }}
+        />
       </View>
 
       <CalendarKit
         minDate={selectedSemester.start_date}
-        maxDate={selectedSemester.end_date} 
-        hourFormat='h:mm A'
+        maxDate={selectedSemester.end_date}
+        hourFormat="h:mm A"
         showWeekNumber
         allowPinchToZoom
         firstDay={7}
@@ -89,13 +103,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onDragEventEnd={handleEventChange}
         dragStep={5}
         onPressEvent={handleEventSelect}
-        events={tasks.map(task => ({
-          id: task.id.toString(),
-          title: task.title,
-          start: { dateTime: task.start.toISOString() },
-          end: { dateTime: task.end.toISOString() },
-          color: '#1A65EB',
-        }))}
+        events={tasks
+          .filter(task => task.start && task.end) // Only include tasks with valid start and end dates
+          .map(task => ({
+            id: task.id.toString(),
+            title: task.title,
+            start: { dateTime: task.start!.toISOString() },
+            end: { dateTime: task.end!.toISOString() },
+          }))
+        }
       />
     </View>
   );
@@ -115,7 +131,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: '#555',
-  },  
+  },
   monthHeader: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -129,7 +145,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: '#1A65EB',
     padding: 8,
-
   },
 });
 
