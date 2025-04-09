@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { addSemester, getSelectedSemester, getSemesters } from "../../database/db";
+import { addSemester, getSelectedSemester, getSemesters } from "../../storage/db";
 import React, { useState } from "react";
 import { Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";

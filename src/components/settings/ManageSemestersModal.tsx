@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { deleteSemester, getSemesters, saveSelectedSemester, } from "../../database/db";
+import { deleteSemester, getSemesters, saveSelectedSemester, } from "../../storage/db";
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
 import NewSemesterModal from "./NewSemesterModal";

@@ -145,11 +145,12 @@ export async function addTask(
   title: string,
   description: string,
   due_date: Date | null,
-  start: Date,
-  end: Date
+  start: Date | null,
+  end: Date | null
 ) {
   const statement = await db.prepareAsync(
-    `INSERT INTO tasks (semester_id, title, description, due_date, start, end) VALUES ($semester_id, $title, $description, $due_date, $start, $end)`
+    `INSERT INTO tasks (semester_id, title, description, due_date, start, end) 
+     VALUES ($semester_id, $title, $description, $due_date, $start, $end)`
   );
   try {
     const finalTitle = title?.trim() ? title : await getNextTaskName(db);
@@ -158,8 +159,8 @@ export async function addTask(
       $title: finalTitle,
       $description: description ? description : null,
       $due_date: due_date ? due_date.toISOString() : null,
-      $start: start.toISOString(),
-      $end: end.toISOString(),
+      $start: start ? start.toISOString() : null, // ✅ fixed
+      $end: end ? end.toISOString() : null,       // ✅ fixed
     });
   } catch (error) {
     console.error("Error adding task:", error);
@@ -167,6 +168,7 @@ export async function addTask(
     await statement.finalizeAsync();
   }
 }
+
 
 
 export async function getNextTaskName(
