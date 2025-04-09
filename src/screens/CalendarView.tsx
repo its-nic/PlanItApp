@@ -26,8 +26,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [selectedTask, setSelectedTask] = useState<Task>({
     id: 0,
     semester_id: selectedSemester.id,
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     due_date: null,
     start: new Date(),
     end: new Date(),
@@ -35,28 +35,41 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   });
   const [editTaskModalVisible, setEditTaskModalVisible] = useState(false);
 
-  // Create a new event (task)
-  const handleEventCreate = (event: any) => {
-    addTask(db, selectedSemester, "New Task", "", null, new Date(event.start.dateTime), new Date(event.end.dateTime));
-    getTasks(db, selectedSemester, tasksStateSetter);
-  }
+  // Convert tasks to EventItem format required by CalendarKit
+  const convertTasksToEvents = (tasks: Task[]) => {
+    return tasks
+      .filter((task) => task.start && task.end) // Only tasks with start and end dates
+      .map((task) => ({
+        id: task.id.toString(),
+        title: task.title,
+        start: { dateTime: task.start!.toISOString() },
+        end: { dateTime: task.end!.toISOString() },
+        // You can add more event details here if needed, such as description or color
+      }));
+  };
 
-  // Update an existing task (event)
+  // Handle event creation
+  const handleEventCreate = (event: any) => {
+    addTask(db, selectedSemester, 'New Task', '', null, new Date(event.start.dateTime), new Date(event.end.dateTime));
+    getTasks(db, selectedSemester, tasksStateSetter);
+  };
+
+  // Handle event modification
   const handleEventChange = (event: any) => {
     updateTaskTime(db, Number(event.id), new Date(event.start.dateTime), new Date(event.end.dateTime));
     getTasks(db, selectedSemester, tasksStateSetter);
-  }
+  };
 
-  // Handle task selection for editing
+  // Handle event selection (task selection)
   const handleEventSelect = async (event: any) => {
     await getTask(db, Number(event.id), (task) => {
       setSelectedTask(task);
       setEditTaskModalVisible(true);
     });
-  }
+  };
 
   useEffect(() => {
-    getTasks(db, selectedSemester, tasksStateSetter); // Ensure tasks are loaded on component mount
+    getTasks(db, selectedSemester, tasksStateSetter); // Load tasks initially
   }, [db, selectedSemester]);
 
   return (
@@ -70,7 +83,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           })}
         </Text>
         <TouchableOpacity style={styles.button} onPress={() => setVisibleDays(visibleDays === 1 ? 7 : 1)}>
-          <Ionicons name={visibleDays === 1 ? "calendar-outline" : "today-outline"} size={20} color={'white'} />
+          <Ionicons name={visibleDays === 1 ? 'calendar-outline' : 'today-outline'} size={20} color={'white'} />
         </TouchableOpacity>
 
         <EditTaskModal
@@ -103,15 +116,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onDragEventEnd={handleEventChange}
         dragStep={5}
         onPressEvent={handleEventSelect}
-        events={tasks
-          .filter(task => task.start && task.end) // Only include tasks with valid start and end dates
-          .map(task => ({
-            id: task.id.toString(),
-            title: task.title,
-            start: { dateTime: task.start!.toISOString() },
-            end: { dateTime: task.end!.toISOString() },
-          }))
-        }
+        events={convertTasksToEvents(tasks)} // Convert tasks to events for CalendarKit
       />
     </View>
   );
