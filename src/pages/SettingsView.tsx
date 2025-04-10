@@ -78,7 +78,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   style: "cancel",
                 },
                 {
-                  text: "Delete",
+                  text: "Reset",
                   style: "destructive",
                   onPress: async () => {
                     await resetDB;
