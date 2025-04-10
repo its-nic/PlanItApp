@@ -13,6 +13,7 @@ interface CalendarViewProps {
   selectedSemester: Semester;
   tasks: Task[];
   tasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
+  showCompletedOnCalendar: boolean;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
@@ -20,6 +21,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   selectedSemester,
   tasks,
   tasksStateSetter,
+  showCompletedOnCalendar,
 }) => {
 
   const [visibleStartDate, setVisibleStartDate] = useState(new Date());
@@ -83,13 +85,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onDragEventEnd={handleEventChange}
         dragStep={5}
         onPressEvent={handleEventSelect}
-        events={tasks.map(task => ({
-          id: task.id.toString(),
-          title: task.completed ? "✅\n" + task.title : task.title,
-          start: { dateTime: task.start.toISOString() },
-          end: { dateTime: task.end.toISOString() },
-          color: task.completed ? '#CAFFBF' : task.color,
-        }))}
+        events={tasks
+          .filter(task => showCompletedOnCalendar || !task.completed) // Filter based on completed status
+          .map(task => ({
+            id: task.id.toString(),
+            title: task.completed ? "✅\n" + task.title : task.title,
+            start: { dateTime: task.start.toISOString() },
+            end: { dateTime: task.end.toISOString() },
+            color: task.completed ? '#CAFFBF' : task.color,
+          }))
+        }
       />
     </View>
   );

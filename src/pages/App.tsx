@@ -1,7 +1,7 @@
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
-import { getTasks, getSelectedSemester, getSemesters, initializeDB } from '../database/db';
+import { getTasks, getSelectedSemester, getSemesters, initializeDB, getShowCompletedOnCalendar } from '../database/db';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
@@ -15,10 +15,10 @@ import NewSemesterModal from '../components/settings/NewSemesterModal';
 import {Task} from '../types/Task';
 
 
-// Reset database (for testing) - will crash if db does not exist.
+// Reset database (for debug) - will crash if db does not exist.
 //SQLite.deleteDatabaseSync('planit.db')
 
-// Reset async storage (for testing). Use this to get back to welcome screen.
+// Reset async storage (for debug). Use this to get back to welcome screen.
 //AsyncStorage.clear();
 
 const db = SQLite.openDatabaseSync('planit.db'); // Open DB
@@ -30,15 +30,17 @@ export default function App() {
 
   const [loading, setLoading] = useState(true); // Loading state for app start
   const [semesters, setSemesters] = useState<Semester[]>([]); // List of all semesters
-  const [selectedSemester, setSelectedSemester] = useState<Semester>({id:0, title:"", start_date:new Date(), end_date:new Date()}) // Selected semester for tasks
-  const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false); // For welcome screen when no semesters exist
   const [tasks, setTasks] = useState<Task[]>([]); // List of all tasks
+  const [selectedSemester, setSelectedSemester] = useState<Semester>({id:0, title:"", start_date:new Date(), end_date:new Date()}) // Selected semester for tasks
+  const [showCompletedOnCalendar, setShowCompletedOnCalendar] = useState<boolean>(true);
+  const [newSemesterModalVisible, setNewSemesterModalVisible] = useState(false); // For welcome screen when no semesters exist
 
   // For app startup DB initialization
   useEffect( () => {
     const initializeApp = async () => {
       await initializeDB(db); // Initialize DB tables
       await getSelectedSemester(setSelectedSemester); // Get selected semester from DB
+      await getShowCompletedOnCalendar(setShowCompletedOnCalendar);
       setLoading(false);
     }
     initializeApp(); // Run the initialization function
@@ -115,6 +117,7 @@ export default function App() {
                 selectedSemester={selectedSemester}
                 tasks={tasks}
                 tasksStateSetter={setTasks}
+                showCompletedOnCalendar={showCompletedOnCalendar}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (
@@ -131,6 +134,8 @@ export default function App() {
                 selectedSemester={selectedSemester}
                 selectedSemesterStateSetter={setSelectedSemester}
                 tasks={tasks}
+                showCompletedOnCalendar={showCompletedOnCalendar}
+                showCompletedOnCalendarStateSetter={setShowCompletedOnCalendar}
               />}
               options={{
                 tabBarIcon: ({ color, size }) => (

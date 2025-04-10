@@ -15,12 +15,6 @@ interface TaskViewProps {
   tasksStateSetter: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
-const formatLength = (minutes: number): string => {
-  const hrs = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hrs ? hrs + 'hr ' : ''}${mins ? mins + 'min' : ''}`;
-}
-
 const TasksView: React.FC<TaskViewProps> = ({
   db,
   selectedSemester,
@@ -39,7 +33,12 @@ const TasksView: React.FC<TaskViewProps> = ({
             <View key={task.id} style={styles.taskItem}>
               <Text style={styles.taskTitle}>{task.title}</Text>
               {task.description && <Text>Description: {task.description}</Text>}
-              {task.due_date && <Text>Due: {task.due_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</Text>}
+              {task.due_date && <Text>Due: <Text
+                style={{
+                  color: task.completed ? 'black' : new Date(task.due_date) < new Date() ? 'red' :
+                  task.due_date <= new Date(new Date().getTime() + 86400000) ? 'orange' : 'black'}}
+                >{task.due_date.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})} | {task.due_date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</Text>
+              </Text>}
               <Text>Complete: {task.completed ? "Yes" : "No"}</Text>
               <Text>Start: {task.start.toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})} | {task.start.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</Text>
               <Text>Length: {((task.end.getTime() - task.start.getTime()) / 60000).toString()} Minutes</Text>

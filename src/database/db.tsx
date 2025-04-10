@@ -279,3 +279,28 @@ export async function saveSelectedSemester(semester: Semester) {
     console.error('Error saving selected semester:', error);
   }
 }
+
+// Get the show completed task setting from the async storage
+export async function getShowCompletedOnCalendar(showCompletedOnCalendarStateSetter: React.Dispatch<React.SetStateAction<boolean>>) {
+  try {
+    const jsonValue = await AsyncStorage.getItem('show-completed');
+    if(jsonValue != null) {
+      const parsedValue = JSON.parse(jsonValue);
+      showCompletedOnCalendarStateSetter(parsedValue);
+    }
+  }
+  catch (error) {
+    console.error('Error reading show completed:', error);
+  }
+}
+
+// Set the show completed task setting from the async storage
+export async function setShowCompletedOnCalendar(state: boolean) {
+  try {
+    const jsonValue = JSON.stringify(state);
+    await AsyncStorage.setItem('show-completed', jsonValue);
+  }
+  catch (error) {
+    console.error('Error saving show completed:', error);
+  }
+}
