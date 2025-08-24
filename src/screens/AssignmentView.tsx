@@ -90,7 +90,17 @@ const AssignmentsView: React.FC<AssignmentViewProps> = ({
                 <Text>{task.title}</Text>
                 {task.due_date && (
                   <Text>
-                    Due: {new Date(task.due_date).toLocaleDateString("en-US")}
+                    Due: {(() => {
+                      try {
+                        const dueDate = new Date(task.due_date);
+                        if (!isNaN(dueDate.getTime())) {
+                          return dueDate.toLocaleDateString("en-US");
+                        }
+                        return "Invalid date";
+                      } catch (error) {
+                        return "Invalid date";
+                      }
+                    })()}
                   </Text>
                 )}
               </TouchableOpacity>

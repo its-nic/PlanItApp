@@ -38,7 +38,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   // Convert tasks to EventItem format required by CalendarKit
   const convertTasksToEvents = (tasks: Task[]) => {
     return tasks
-      .filter((task) => task.start && task.end) // Only tasks with start and end dates
+      .filter((task) => {
+        // Ensure both start and end dates exist and are valid
+        return task.start && task.end && 
+               !isNaN(task.start.getTime()) && 
+               !isNaN(task.end.getTime());
+      })
       .map((task) => ({
         id: task.id.toString(),
         title: task.title,
@@ -50,14 +55,40 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Handle event creation
   const handleEventCreate = (event: any) => {
-    addTask(db, selectedSemester, 'New Task', '', null, new Date(event.start.dateTime), new Date(event.end.dateTime));
-    getTasks(db, selectedSemester, tasksStateSetter);
+    try {
+      const startDate = new Date(event.start.dateTime);
+      const endDate = new Date(event.end.dateTime);
+      
+      // Validate dates
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.warn('Invalid date received from calendar event:', event);
+        return;
+      }
+      
+      addTask(db, selectedSemester, 'New Task', '', null, startDate, endDate);
+      getTasks(db, selectedSemester, tasksStateSetter);
+    } catch (error) {
+      console.error('Error creating event:', error);
+    }
   };
 
   // Handle event modification
   const handleEventChange = (event: any) => {
-    updateTaskTime(db, Number(event.id), new Date(event.start.dateTime), new Date(event.end.dateTime));
-    getTasks(db, selectedSemester, tasksStateSetter);
+    try {
+      const startDate = new Date(event.start.dateTime);
+      const endDate = new Date(event.end.dateTime);
+      
+      // Validate dates
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.warn('Invalid date received from calendar event:', event);
+        return;
+      }
+      
+      updateTaskTime(db, Number(event.id), startDate, endDate);
+      getTasks(db, selectedSemester, tasksStateSetter);
+    } catch (error) {
+      console.error('Error updating event:', error);
+    }
   };
 
   // Handle event selection (task selection)
@@ -109,7 +140,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         allowPinchToZoom
         firstDay={7}
         numberOfDays={visibleDays}
-        onDateChanged={(date) => setVisibleStartDate(new Date(date))}
+        onDateChanged={(date) => {
+          try {
+            const newDate = new Date(date);
+            if (!isNaN(newDate.getTime())) {
+              setVisibleStartDate(newDate);
+            } else {
+              console.warn('Invalid date received from calendar:', date);
+            }
+          } catch (error) {
+            console.error('Error handling date change:', error);
+          }
+        }}
         allowDragToCreate
         onDragCreateEventEnd={handleEventCreate}
         allowDragToEdit

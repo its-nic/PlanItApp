@@ -46,7 +46,19 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const initialValues: TaskFormValues = {
     title: task.title,
     description: task.description,
-    dueDate: task.due_date ? new Date(task.due_date) : undefined,
+    dueDate: (() => {
+      try {
+        if (task.due_date) {
+          const dueDate = new Date(task.due_date);
+          if (!isNaN(dueDate.getTime())) {
+            return dueDate;
+          }
+        }
+        return undefined;
+      } catch (error) {
+        return undefined;
+      }
+    })(),
     completed: task.completed,
   };
 
@@ -156,25 +168,55 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     {task.due_date && (
                       <Text style={styles.overviewText}>
                         📅 Due:{" "}
-                        {new Date(task.due_date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        {(() => {
+                          try {
+                            const dueDate = new Date(task.due_date);
+                            if (!isNaN(dueDate.getTime())) {
+                              return dueDate.toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              });
+                            }
+                            return "Invalid date";
+                          } catch (error) {
+                            return "Invalid date";
+                          }
+                        })()}
                       </Text>
                     )}
                     {task.start && (
                       <>
                         <Text style={styles.overviewText}>
-                          ⏰ Start: {new Date(task.start).toLocaleTimeString()}
+                          ⏰ Start: {(() => {
+                            try {
+                              const startDate = new Date(task.start);
+                              if (!isNaN(startDate.getTime())) {
+                                return startDate.toLocaleTimeString();
+                              }
+                              return "Invalid time";
+                            } catch (error) {
+                              return "Invalid time";
+                            }
+                          })()}
                         </Text>
                         {task.end && (
                           <Text style={styles.overviewText}>
                             ⏳ Duration:{" "}
-                            {Math.round(
-                              (new Date(task.end).getTime() - new Date(task.start).getTime()) / 60000
-                            )}{" "}
-                            mins
+                            {(() => {
+                              try {
+                                const startDate = new Date(task.start);
+                                const endDate = new Date(task.end);
+                                if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                                  return Math.round(
+                                    (endDate.getTime() - startDate.getTime()) / 60000
+                                  ) + " mins";
+                                }
+                                return "Invalid duration";
+                              } catch (error) {
+                                return "Invalid duration";
+                              }
+                            })()}
                           </Text>
                         )}
                       </>

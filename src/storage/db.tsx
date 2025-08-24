@@ -83,14 +83,31 @@ export async function getAssignmentsWithTasks(
     const tasksRaw: any[] = await tasksResult.getAllAsync();
     await tasksStmt.finalizeAsync();
 
+    // Helper function to safely create Date objects
+    const safeCreateDate = (dateString: string | null): Date | null => {
+      if (!dateString) return null;
+      try {
+        const date = new Date(dateString);
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+          console.warn(`Invalid date string: ${dateString}`);
+          return null;
+        }
+        return date;
+      } catch (error) {
+        console.warn(`Error creating date from string: ${dateString}`, error);
+        return null;
+      }
+    };
+
     const allTasks: Task[] = tasksRaw.map((row) => ({
       id: row.id,
       semester_id: row.semester_id,
       title: row.title,
       description: row.description || "",
-      due_date: row.due_date ? new Date(row.due_date) : null,
-      start: row.start ? new Date(row.start) : null,
-      end: row.end ? new Date(row.end) : null,
+      due_date: safeCreateDate(row.due_date),
+      start: safeCreateDate(row.start),
+      end: safeCreateDate(row.end),
       completed: row.completed === 1,
       assignment_id: row.assignment_id ?? null,
     }));
@@ -139,11 +156,29 @@ export async function deleteAssignment(db: SQLite.SQLiteDatabase, id: number) {
 // Get all semesters from the database and set them to state
 export async function getSemesters(db: SQLite.SQLiteDatabase, semestersStateSetter: React.Dispatch<React.SetStateAction<Semester[]>>) {
   const allRows: any = await db.getAllAsync('SELECT * FROM semesters');
+  
+  // Helper function to safely create Date objects
+  const safeCreateDate = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid date string: ${dateString}`);
+        return null;
+      }
+      return date;
+    } catch (error) {
+      console.warn(`Error creating date from string: ${dateString}`, error);
+      return null;
+    }
+  };
+
   const semesters: Semester[] = allRows.map((row: any) => ({
     id: row.id,
     title: row.title,
-    start_date: new Date(row.start_date),
-    end_date: new Date (row.end_date),
+    start_date: safeCreateDate(row.start_date) || new Date(),
+    end_date: safeCreateDate(row.end_date) || new Date(),
   }));
   semestersStateSetter(semesters);
 };
@@ -193,16 +228,35 @@ export async function getTasks(db: SQLite.SQLiteDatabase, selectedSemester: Seme
   try {
     const result = await statement.executeAsync({$semester_id: selectedSemester.id,});
     const allRows: any = await result.getAllAsync();
-    const tasks: Task[] = allRows.map((row: any) => ({
-      id: row.id,
-      semester_id: row.semester_id,
-      title: row.title,
-      description: row.description ? row.description : "",
-      due_date: row.due_date ? new Date(row.due_date) : null,
-      start: new Date(row.start),
-      end: new Date(row.end),
-      completed: row.completed === 1,
-    }));
+    const tasks: Task[] = allRows.map((row: any) => {
+      // Helper function to safely create Date objects
+      const safeCreateDate = (dateString: string | null): Date | null => {
+        if (!dateString) return null;
+        try {
+          const date = new Date(dateString);
+          // Check if the date is valid
+          if (isNaN(date.getTime())) {
+            console.warn(`Invalid date string: ${dateString}`);
+            return null;
+          }
+          return date;
+        } catch (error) {
+          console.warn(`Error creating date from string: ${dateString}`, error);
+          return null;
+        }
+      };
+
+      return {
+        id: row.id,
+        semester_id: row.semester_id,
+        title: row.title,
+        description: row.description ? row.description : "",
+        due_date: safeCreateDate(row.due_date),
+        start: safeCreateDate(row.start),
+        end: safeCreateDate(row.end),
+        completed: row.completed === 1,
+      };
+    });
     tasksStateSetter(tasks);
   }
   catch (error) {
@@ -221,14 +275,32 @@ export async function getTask(db: SQLite.SQLiteDatabase, id: number, taskStateSe
   try {
     const result = await statement.executeAsync({$id: id,});
     const row: any = await result.getFirstAsync();
+    
+    // Helper function to safely create Date objects
+    const safeCreateDate = (dateString: string | null): Date | null => {
+      if (!dateString) return null;
+      try {
+        const date = new Date(dateString);
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+          console.warn(`Invalid date string: ${dateString}`);
+          return null;
+        }
+        return date;
+      } catch (error) {
+        console.warn(`Error creating date from string: ${dateString}`, error);
+        return null;
+      }
+    };
+
     const task: Task = {
       id: row.id,
       semester_id: row.semester_id,
       title: row.title,
       description: row.description ? row.description : "",
-      due_date: row.due_date ? new Date(row.due_date) : null,
-      start: new Date(row.start),
-      end: new Date(row.end),
+      due_date: safeCreateDate(row.due_date),
+      start: safeCreateDate(row.start),
+      end: safeCreateDate(row.end),
       completed: row.completed === 1,
     };
     taskStateSetter(task);
