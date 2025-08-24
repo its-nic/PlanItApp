@@ -1,4 +1,3 @@
-// components/tasks/EditTaskModal.tsx
 import React, { useState } from "react";
 import {
   Modal,
@@ -16,6 +15,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Task } from "../../types/Task";
 import TaskForm, { TaskFormValues } from "./TaskForm";
+import DateTimePicker from '@react-native-community/datetimepicker';  // Import the DateTimePicker
 
 interface EditTaskModalProps {
   visible: boolean;
@@ -29,7 +29,6 @@ interface EditTaskModalProps {
   removeTask: (id: number) => Promise<void>;
 }
 
-
 const EditTaskModal: React.FC<EditTaskModalProps> = ({
   visible,
   onClose,
@@ -38,16 +37,33 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   removeTask,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [startTime, setStartTime] = useState<Date | null>(task.start || null);
+  const [endTime, setEndTime] = useState<Date | null>(task.end || null);
+  const [isScheduling, setIsScheduling] = useState(false); // Whether the user is in scheduling mode
+  const [showStartPicker, setShowStartPicker] = useState(false); // State for showing the start time picker
+  const [showEndPicker, setShowEndPicker] = useState(false); // State for showing the end time picker
 
   const initialValues: TaskFormValues = {
     title: task.title,
     description: task.description,
-    dueDate: task.due_date ? new Date(task.due_date) : undefined,
+    dueDate: (() => {
+      try {
+        if (task.due_date) {
+          const dueDate = new Date(task.due_date);
+          if (!isNaN(dueDate.getTime())) {
+            return dueDate;
+          }
+        }
+        return undefined;
+      } catch (error) {
+        return undefined;
+      }
+    })(),
     completed: task.completed,
   };
 
   const handleSubmit = async (values: TaskFormValues) => {
-    await updateExistingTask(task.id, { ...values }, values.completed || false);
+    await updateExistingTask(task.id, { ...values, startTime, endTime }, values.completed || false);
     onClose();
   };
 
@@ -69,6 +85,36 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     ]);
   };
 
+  const handleSchedule = () => {
+    setIsScheduling(true); // Enable scheduling mode
+  };
+
+  const handleDateChange = (event: any, selectedDate: Date | undefined, type: "start" | "end") => {
+    const currentDate = selectedDate || new Date();
+    if (type === "start") {
+      setStartTime(currentDate);
+      setShowStartPicker(false); // Hide start picker after selecting a date
+    } else {
+      setEndTime(currentDate);
+      setShowEndPicker(false); // Hide end picker after selecting a date
+    }
+  };
+
+  const handleCloseDatePicker = () => {
+    setShowStartPicker(false);
+    setShowEndPicker(false);
+  };
+
+  const handleStartButtonPress = () => {
+    setShowStartPicker(true);  // Show start date picker
+    setShowEndPicker(false);   // Hide end date picker
+  };
+
+  const handleEndButtonPress = () => {
+    setShowEndPicker(true);    // Show end date picker
+    setShowStartPicker(false); // Hide start date picker
+  };
+
   return (
     <Modal visible={visible} animationType="fade" transparent>
       <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); onClose(); }}>
@@ -84,6 +130,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               >
                 {/* Delete Button */}
                 <View style={styles.titleContainer}>
+                  {/* Close Button */}
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={onClose}
+                  >
+                    <Ionicons name="close" size={20} color={"white"} />
+                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => {
@@ -114,25 +168,55 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     {task.due_date && (
                       <Text style={styles.overviewText}>
                         📅 Due:{" "}
-                        {new Date(task.due_date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        {(() => {
+                          try {
+                            const dueDate = new Date(task.due_date);
+                            if (!isNaN(dueDate.getTime())) {
+                              return dueDate.toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              });
+                            }
+                            return "Invalid date";
+                          } catch (error) {
+                            return "Invalid date";
+                          }
+                        })()}
                       </Text>
                     )}
                     {task.start && (
                       <>
                         <Text style={styles.overviewText}>
-                          ⏰ Start: {new Date(task.start).toLocaleTimeString()}
+                          ⏰ Start: {(() => {
+                            try {
+                              const startDate = new Date(task.start);
+                              if (!isNaN(startDate.getTime())) {
+                                return startDate.toLocaleTimeString();
+                              }
+                              return "Invalid time";
+                            } catch (error) {
+                              return "Invalid time";
+                            }
+                          })()}
                         </Text>
                         {task.end && (
                           <Text style={styles.overviewText}>
                             ⏳ Duration:{" "}
-                            {Math.round(
-                              (new Date(task.end).getTime() - new Date(task.start).getTime()) / 60000
-                            )}{" "}
-                            mins
+                            {(() => {
+                              try {
+                                const startDate = new Date(task.start);
+                                const endDate = new Date(task.end);
+                                if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                                  return Math.round(
+                                    (endDate.getTime() - startDate.getTime()) / 60000
+                                  ) + " mins";
+                                }
+                                return "Invalid duration";
+                              } catch (error) {
+                                return "Invalid duration";
+                              }
+                            })()}
                           </Text>
                         )}
                       </>
@@ -156,11 +240,62 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                   />
                 )}
 
+                {/* Schedule Button */}
+                {!isScheduling && (
+                  <TouchableOpacity style={styles.unscheduleButton} onPress={handleSchedule}>
+                    <Text style={styles.buttonText}>Schedule</Text>
+                  </TouchableOpacity>
+                )}
+
                 {/* Unschedule Button */}
                 {task.start && (
                   <TouchableOpacity style={styles.unscheduleButton} onPress={handleUnschedule}>
                     <Text style={styles.buttonText}>Unschedule</Text>
                   </TouchableOpacity>
+                )}
+
+                {/* Date Picker for Start and End Times */}
+                {isScheduling && (
+                  <View style={styles.datePickerContainer}>
+                    <Text style={styles.datePickerLabel}>Select Start and End Time:</Text>
+                    <View style={styles.datePickerRow}>
+                      <TouchableOpacity
+                        style={styles.datePickerButton}
+                        onPress={handleStartButtonPress} // Show start date picker
+                      >
+                        <Text>Start Time: {startTime ? startTime.toLocaleString() : "Not set"}</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.datePickerRow}>
+                      <TouchableOpacity
+                        style={styles.datePickerButton}
+                        onPress={handleEndButtonPress} // Show end date picker
+                      >
+                        <Text>End Time: {endTime ? endTime.toLocaleString() : "Not set"}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {showStartPicker && (
+                      <DateTimePicker
+                        value={startTime || new Date()}
+                        mode="datetime"
+                        display="default"
+                        onChange={(event, selectedDate) =>
+                          handleDateChange(event, selectedDate, "start")
+                        }
+                      />
+                    )}
+                    {showEndPicker && (
+                      <DateTimePicker
+                        value={endTime || new Date()}
+                        mode="datetime"
+                        display="default"
+                        onChange={(event, selectedDate) =>
+                          handleDateChange(event, selectedDate, "end")
+                        }
+                      />
+                    )}
+                  </View>
                 )}
               </ScrollView>
             </KeyboardAvoidingView>
@@ -170,6 +305,8 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     </Modal>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   overlay: {
@@ -236,11 +373,41 @@ const styles = StyleSheet.create({
   deleteButton: {
     position: "absolute",
     backgroundColor: "#DC3545",
+    left: 0,
+    top: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 50,
+  },
+  closeButton: {
+    position: "absolute",
+    backgroundColor: "#6C757D",
     right: 0,
     top: 0,
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 50,
+  },
+  datePickerContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  datePickerLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  datePickerRow: {
+    marginBottom: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  datePickerButton: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 5,
+    width: "100%",
+    alignItems: "center",
   },
 });
 

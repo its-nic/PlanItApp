@@ -7,7 +7,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Platform, View, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import CalendarView from './CalendarView';
-import TasksView from './TasksView';
+import TasksView from './AssignmentView';
 import SettingsView from './SettingsView';
 import { useEffect, useState } from 'react';
 import { Semester } from '../types/Semester';
